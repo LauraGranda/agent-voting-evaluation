@@ -1,5 +1,5 @@
 [project]
-name = "Agent Voting Evaluation"
+name = "agent-voting-evaluation"
 version = "0.1.0"
 description = "Sistema de evaluación de agentes LLM mediante vun sistema de votación"
 authors = [
