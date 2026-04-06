@@ -8,9 +8,21 @@ Usage:
     uv run python scripts/test_deepeval_setup.py
 """
 
-from typing import Any
+from typing import TypedDict
 
 from deepeval.test_case import ConversationalTestCase
+
+
+class TurnDict(TypedDict):
+    """Type definition for a conversation turn.
+
+    Attributes:
+        role: The role of the speaker (e.g., "user", "assistant").
+        content: The textual content of the turn.
+    """
+
+    role: str
+    content: str
 
 
 def create_dummy_test_case() -> ConversationalTestCase:
@@ -19,7 +31,7 @@ def create_dummy_test_case() -> ConversationalTestCase:
     Returns:
         A ConversationalTestCase with a single dummy turn for testing.
     """
-    turn: Any = {
+    turn: TurnDict = {
         "role": "user",
         "content": "Hello, how are you?",
     }
