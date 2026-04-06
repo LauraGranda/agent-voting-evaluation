@@ -3,7 +3,8 @@ data/**
 
 # except their sub-folders
 !data/**/
-!data/README.md
+!data/raw/
+!data/processed/
 
 # also keep all .gitkeep files
 !.gitkeep

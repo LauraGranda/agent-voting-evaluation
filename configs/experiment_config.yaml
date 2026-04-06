@@ -1,0 +1,5 @@
+# Experiment configuration
+model_name: "gpt-4o"
+temperature: 0.0
+n_executions: 10
+seed: 42
