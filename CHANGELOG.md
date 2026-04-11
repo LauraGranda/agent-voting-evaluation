@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Dataset Selection (HU-00 / #8)** - Investigación y selección del dataset para evaluación de relevancia en agentes conversacionales compatible con G-Eval:
+    - `docs/dataset_selection.md` con 6 datasets candidatos documentados (DailyDialog-Zhao, FED-Turn, Topical-Chat USR, HUMOD, DSTC10, Zhang AAAI 2024), cada uno con nombre, fuente, tamaño, dominio, tipo de anotaciones, escala, idioma y URL
+    - Matriz de evaluación con 6 criterios: anotaciones humanas de relevancia, respuestas generadas por IA, disponibilidad pública, resultados previos publicados, tamaño manejable y compatibilidad con DeepEval
+    - Justificación del dataset ganador **DailyDialog-Zhao** (Zhao et al., ACL 2020): dimensión Relevance explícita en escala 1-5, 6 modelos IA generadores, 900 pares óptimos para el alcance de la tesis y compatibilidad nativa con DeepEval
+
 ## [0.1.0] - 2026-04-05
 
 ### Added
