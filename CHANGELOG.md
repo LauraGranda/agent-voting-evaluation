@@ -7,12 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-11
+
 ### Added
 
-- **Dataset Selection (HU-00 / #8)** - Investigación y selección del dataset para evaluación de relevancia en agentes conversacionales compatible con G-Eval:
-    - `docs/dataset_selection.md` con 6 datasets candidatos documentados (DailyDialog-Zhao, FED-Turn, Topical-Chat USR, HUMOD, DSTC10, Zhang AAAI 2024), cada uno con nombre, fuente, tamaño, dominio, tipo de anotaciones, escala, idioma y URL
-    - Matriz de evaluación con 6 criterios: anotaciones humanas de relevancia, respuestas generadas por IA, disponibilidad pública, resultados previos publicados, tamaño manejable y compatibilidad con DeepEval
-    - Justificación del dataset ganador **DailyDialog-Zhao** (Zhao et al., ACL 2020): dimensión Relevance explícita en escala 1-5, 6 modelos IA generadores, 900 pares óptimos para el alcance de la tesis y compatibilidad nativa con DeepEval
+- **Dataset Selection Investigation (HU-00 / #8)** - Investigación y selección del dataset para evaluación de relevancia:
+    - `docs/dataset_selection.md` con 6 datasets candidatos documentados y análisis comparativo
+    - Matriz de evaluación con 6 criterios (anotaciones humanas, respuestas IA, disponibilidad, resultados previos, tamaño, compatibilidad)
+    - Justificación del dataset ganador **DailyDialog-Zhao** (Zhao et al., ACL 2020) con 650+ palabras
+
+- **Dataset Acquisition & Processing Pipeline (HU-01)** - Descarga y procesamiento automático del dataset DailyDialog-Zhao desde Zenodo:
+    - `scripts/download_dataset.py` - Script de descarga idempotente que:
+        - Descarga `ACL2020_data.zip` (118.2 KB) desde Zenodo (DOI: 10.5281/zenodo.3828180)
+        - Extrae y parsea 900 pares contexto-respuesta con anotaciones humanas
+        - Valida integridad contra valores del paper (100 diálogos, 9 respuestas/diálogo, 4 anotadores)
+        - Mapea dimensiones: `relevance → relevance`, `content → appropriateness`
+        - Genera `data/raw/dailydialog_zhao/dataset.json` con 8 campos por entrada
+        - Auto-genera `data/README.md` con estadísticas y metadatos
+    - `data/raw/dailydialog_zhao/` - Directorio con zip descargado y dataset.json procesado (586 KB)
+    - `data/README.md` - Documentación auto-generada con:
+        - Información de fuente (paper, Zenodo, fecha descarga)
+        - Licencia y esquema de campos
+        - Distribución de puntuaciones y verificación de integridad
+        - Lista de 21 modelos generativos incluidos
+
+- **Test Suite for Data Pipeline** - Cobertura comprehensiva de funciones de procesamiento de datos:
+    - `tests/test_download_dataset.py` - 27 tests divididos en 4 clases:
+        - **TestParseAnnotations** (9 tests): parsing JSON → dataset limpio
+            - Single entry parsing, múltiples modelos, cálculo de medias, extracción de turns, formato conversation_id
+            - Ground-truth y negative-sample incluidos, input vacío, scores faltantes
+        - **TestRunIntegrityChecks** (6 tests): validación de integridad del dataset
+            - 900 pares pasan, total incorrecto falla, scores fuera de rango, anotadores insuficientes, reportes completos
+        - **TestPrintSummary** (4 tests): generación de resumen de estadísticas
+            - Dataset mínimo y completo sin crash, reporta conteo de pares y modelos
+        - **TestGenerateReadme** (8 tests): generación de documentación README
+            - Archivo creado, URL Zenodo, licencia, estadísticas, modelos, esquema, sección de integridad, fecha
+
+### Changed
+
+- **Dependencies** - Nuevas librerías para descarga y type-checking:
+    - `requests` (>= 2.28.0) - HTTP client para descargar desde Zenodo
+    - `types-requests` (>= 2.28.0) - Type stubs para mypy (dev dependency)
 
 ## [0.1.0] - 2026-04-05
 
