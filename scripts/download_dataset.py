@@ -84,7 +84,7 @@ def download_zip(dest_dir: Path) -> Path:
             # Verify it's a valid zip
             if not zipfile.is_zipfile(tmp_file):
                 tmp_file.unlink()
-                raise ValueError("Downloaded file is not a valid zip") from None  # noqa: TRY301
+                raise ValueError("Downloaded file is not a valid zip")  # noqa: TRY301
 
             # Atomic rename
             tmp_file.replace(zip_file)
@@ -446,7 +446,7 @@ def main() -> None:
             ),
             (
                 "No null values in required fields",
-                all(all(v for k, v in e.items() if k != "turns") for e in dataset),
+                all(v is not None for e in dataset for k, v in e.items() if k != "turns"),
             ),
             ("README.md exists", README_PATH.exists()),
         ]

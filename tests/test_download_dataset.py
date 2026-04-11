@@ -228,7 +228,7 @@ class TestParseAnnotations:
 
         assert entry["turns"] == ["first turn", "second turn", "third turn"]
         # No speaker labels in turns
-        assert all(speaker not in str(turn) for speaker in ["A", "B"] for turn in entry["turns"])
+        assert all(speaker not in turn for turn in entry["turns"] for speaker in ["A", "B"])
 
     def test_parse_conversation_id_format(self, tmp_path: Path) -> None:
         """ID follows 'conv_{index}_{model}' pattern."""
@@ -551,7 +551,10 @@ class TestGenerateReadme:
         """Content includes today's date."""
         readme_path = tmp_path / "test_readme.md"
 
-        with patch("builtins.print"), patch("download_dataset.datetime") as mock_datetime:
+        with (
+            patch("builtins.print"),
+            patch("download_dataset.datetime") as mock_datetime,
+        ):
             mock_datetime.now.return_value = MagicMock(
                 isoformat=MagicMock(return_value="2026-04-11T12:00:00.000000")
             )
