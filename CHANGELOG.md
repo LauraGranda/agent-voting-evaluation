@@ -9,79 +9,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Exploratory Data Analysis Notebook** - Complete analysis of human relevance scores:
-    - `notebooks/01_eda.ipynb` - Jupyter notebook with 16 cells (243 KB):
-        - Descriptive statistics: mean, median, std, min, max, Q1, Q3, IQR, skewness
-        - Statistics by model family (8 families collapsed from 21 variants)
-        - Histogram of score distribution (with mean/median lines)
-        - Horizontal boxplot by model family (distinctive colors: green ground-truth, red negative-sample)
-        - Frequency graph of buckets with percentages
-        - Outlier analysis (IQR fence detection + inter-annotator disagreement, std > 1.5)
-        - Inter-annotator disagreement histogram
-        - Dataset balance verification (ground-truth always highest, negative-sample always lowest)
-        - Conclusions with 4 subsections: distribution summary, performance patterns, annotator agreement, implications for G-Eval experiments
-    - Four publication-ready figures at 150 dpi in `outputs/figures/`:
-        - `01_histogram_relevance.png` (53 KB) - Score distribution
-        - `02_boxplot_by_model.png` (60 KB) - Comparison by model family
-        - `03_frequency_table.png` (53 KB) - Bucket distribution
-        - `04_interannotator_std.png` (63 KB) - Inter-annotator disagreement distribution
-    - Fully typed code (PEP 585: list[float], dict[str, Any], etc.)
-    - Google-style docstrings on all helper functions
-    - Constants as Final[] to avoid magic numbers
+- **Exploratory Data Analysis Notebook (Dataset_exploration branch)** - Análisis completo de las puntuaciones de relevancia humana:
+    - `notebooks/01_eda.ipynb` - Notebook Jupyter con 16 celdas (243 KB):
+        - Análisis descriptivo: mean, median, std, min, max, Q1, Q3, IQR, skewness
+        - Estadísticas por familia de modelos (8 familias colapsadas de 21 variantes)
+        - Histograma de distribución de puntuaciones (con líneas media/mediana)
+        - Boxplot horizontal por familia de modelos (colores distintivos: verde ground-truth, rojo negative-sample)
+        - Gráfico de frecuencia de buckets con porcentajes
+        - Análisis de outliers (detección por IQR fence + desacuerdo inter-anotador alto, std > 1.5)
+        - Histograma de desacuerdo entre anotadores
+        - Verificación de balance del dataset (ground-truth siempre más alto, negative-sample siempre más bajo)
+        - Conclusiones con 4 subsecciones: resumen de distribución, patrones de rendimiento, acuerdo anotadores, implicaciones para experimentos G-Eval
+    - Cuatro figuras de 150 dpi listos para publicación en `outputs/figures/`:
+        - `01_histogram_relevance.png` (53 KB) - Distribución de puntuaciones
+        - `02_boxplot_by_model.png` (60 KB) - Comparación por familia de modelos
+        - `03_frequency_table.png` (53 KB) - Distribución de buckets
+        - `04_interannotator_std.png` (63 KB) - Distribución de desacuerdo inter-anotador
+    - Código completamente tipado (PEP 585: list[float], dict[str, Any], etc.)
+    - Docstrings Google-style en todas las funciones helper
+    - Constantes como Final[] para evitar magic numbers
 
 ### Changed
 
-- **Dependencies** - New libraries for notebook execution:
-    - `jupyter` (>= 1.1.0) - Jupyter notebook environment
-    - `nbconvert` (>= 7.16.0) - Notebook conversion and execution (for CI/CD)
+- **Dependencies** - Nuevas librerías para ejecutar notebooks:
+    - `jupyter` (>= 1.1.0) - Entorno Jupyter para ejecutar .ipynb
+    - `nbconvert` (>= 7.16.0) - Conversión y ejecución de notebooks (para CI/CD)
 
 ## [0.2.0] - 2026-04-11
 
 ### Added
 
-- **Dataset Selection Investigation (HU-00 / #8)** - Dataset investigation and selection for relevance evaluation:
-    - `docs/dataset_selection.md` with 6 candidate datasets and comparative analysis
-    - Evaluation matrix with 6 criteria (human annotations, AI responses, availability, prior results, size, compatibility)
-    - Justification of winning dataset **DailyDialog-Zhao** (Zhao et al., ACL 2020) with 650+ words
+- **Dataset Selection Investigation (HU-00 / #8)** - Investigación y selección del dataset para evaluación de relevancia:
+    - `docs/dataset_selection.md` con 6 datasets candidatos documentados y análisis comparativo
+    - Matriz de evaluación con 6 criterios (anotaciones humanas, respuestas IA, disponibilidad, resultados previos, tamaño, compatibilidad)
+    - Justificación del dataset ganador **DailyDialog-Zhao** (Zhao et al., ACL 2020) con 650+ palabras
 
-- **Dataset Acquisition & Processing Pipeline (HU-01)** - Automatic download and processing of DailyDialog-Zhao dataset from Zenodo:
-    - `scripts/download_dataset.py` - Idempotent download script that:
-        - Downloads `ACL2020_data.zip` (118.2 KB) from Zenodo (DOI: 10.5281/zenodo.3828180)
-        - Extracts and parses 900 context-response pairs with human annotations
-        - Validates integrity against paper values (100 dialogues, 9 responses/dialogue, 4 annotators)
-        - Maps dimensions: `relevance -> relevance`, `content -> appropriateness`
-        - Generates `data/raw/dailydialog_zhao/dataset.json` with 8 fields per entry
-        - Auto-generates `data/README.md` with statistics and metadata
-    - `data/raw/dailydialog_zhao/` - Directory with downloaded zip and processed dataset.json (586 KB)
-    - `data/README.md` - Auto-generated documentation with:
-        - Source information (paper, Zenodo, download date)
-        - License and field schema
-        - Score distribution and integrity verification
-        - List of 21 generative models included
+- **Dataset Acquisition & Processing Pipeline (HU-01)** - Descarga y procesamiento automático del dataset DailyDialog-Zhao desde Zenodo:
+    - `scripts/download_dataset.py` - Script de descarga idempotente que:
+        - Descarga `ACL2020_data.zip` (118.2 KB) desde Zenodo (DOI: 10.5281/zenodo.3828180)
+        - Extrae y parsea 900 pares contexto-respuesta con anotaciones humanas
+        - Valida integridad contra valores del paper (100 diálogos, 9 respuestas/diálogo, 4 anotadores)
+        - Mapea dimensiones: `relevance → relevance`, `content → appropriateness`
+        - Genera `data/raw/dailydialog_zhao/dataset.json` con 8 campos por entrada
+        - Auto-genera `data/README.md` con estadísticas y metadatos
+    - `data/raw/dailydialog_zhao/` - Directorio con zip descargado y dataset.json procesado (586 KB)
+    - `data/README.md` - Documentación auto-generada con:
+        - Información de fuente (paper, Zenodo, fecha descarga)
+        - Licencia y esquema de campos
+        - Distribución de puntuaciones y verificación de integridad
+        - Lista de 21 modelos generativos incluidos
 
-- **Test Suite for Data Pipeline** - Comprehensive coverage of data processing functions:
-    - `tests/test_download_dataset.py` - 27 tests divided into 4 classes:
-        - **TestParseAnnotations** (9 tests): JSON parsing -> clean dataset
-            - Single entry parsing, multiple models, mean calculation, turn extraction, conversation_id format
-            - Ground-truth and negative-sample included, empty input, missing scores
-        - **TestRunIntegrityChecks** (6 tests): dataset integrity validation
-            - 900 pairs pass, incorrect total fails, scores out of range, insufficient annotators, complete reports
-        - **TestPrintSummary** (4 tests): statistics summary generation
-            - Minimal and complete dataset without crash, reports pair and model counts
-        - **TestGenerateReadme** (8 tests): README documentation generation
-            - File created, Zenodo URL, license, statistics, models, schema, integrity section, date
+- **Test Suite for Data Pipeline** - Cobertura comprehensiva de funciones de procesamiento de datos:
+    - `tests/test_download_dataset.py` - 27 tests divididos en 4 clases:
+        - **TestParseAnnotations** (9 tests): parsing JSON → dataset limpio
+            - Single entry parsing, múltiples modelos, cálculo de medias, extracción de turns, formato conversation_id
+            - Ground-truth y negative-sample incluidos, input vacío, scores faltantes
+        - **TestRunIntegrityChecks** (6 tests): validación de integridad del dataset
+            - 900 pares pasan, total incorrecto falla, scores fuera de rango, anotadores insuficientes, reportes completos
+        - **TestPrintSummary** (4 tests): generación de resumen de estadísticas
+            - Dataset mínimo y completo sin crash, reporta conteo de pares y modelos
+        - **TestGenerateReadme** (8 tests): generación de documentación README
+            - Archivo creado, URL Zenodo, licencia, estadísticas, modelos, esquema, sección de integridad, fecha
 
 ### Changed
 
-- **Dependencies** - New libraries for download and type-checking:
-    - `requests` (>= 2.28.0) - HTTP client for downloading from Zenodo
-    - `types-requests` (>= 2.28.0) - Type stubs for mypy (dev dependency)
+- **Dependencies** - Nuevas librerías para descarga y type-checking:
+    - `requests` (>= 2.28.0) - HTTP client para descargar desde Zenodo
+    - `types-requests` (>= 2.28.0) - Type stubs para mypy (dev dependency)
 
 ## [0.1.0] - 2026-04-05
 
 ### Added
 
-- **Project Structure** - Reorganized repository to align with thesis plan for "Relevance Evaluation in Conversational AI Agents through an Agentic Voting System compared with G-EVAL Framework"
+- **Project Structure** - Reorganized repository to align with thesis plan for "Evaluación de Relevancia en Agentes Conversacionales de IA mediante un Sistema de Votación Agéntico en comparación con el Framework G-EVAL"
 - **Configuration System** - Created thesis-specific configuration structure:
     - `configs/prompts/` - Directory for prompt templates
     - `configs/agents/` - Directory for agent configurations
