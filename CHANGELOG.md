@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Exploratory Data Analysis Notebook (Dataset_exploration branch)** - Análisis completo de las puntuaciones de relevancia humana:
+    - `notebooks/01_eda.ipynb` - Notebook Jupyter con 16 celdas (243 KB):
+        - Análisis descriptivo: mean, median, std, min, max, Q1, Q3, IQR, skewness
+        - Estadísticas por familia de modelos (8 familias colapsadas de 21 variantes)
+        - Histograma de distribución de puntuaciones (con líneas media/mediana)
+        - Boxplot horizontal por familia de modelos (colores distintivos: verde ground-truth, rojo negative-sample)
+        - Gráfico de frecuencia de buckets con porcentajes
+        - Análisis de outliers (detección por IQR fence + desacuerdo inter-anotador alto, std > 1.5)
+        - Histograma de desacuerdo entre anotadores
+        - Verificación de balance del dataset (ground-truth siempre más alto, negative-sample siempre más bajo)
+        - Conclusiones con 4 subsecciones: resumen de distribución, patrones de rendimiento, acuerdo anotadores, implicaciones para experimentos G-Eval
+    - Cuatro figuras de 150 dpi listos para publicación en `outputs/figures/`:
+        - `01_histogram_relevance.png` (53 KB) - Distribución de puntuaciones
+        - `02_boxplot_by_model.png` (60 KB) - Comparación por familia de modelos
+        - `03_frequency_table.png` (53 KB) - Distribución de buckets
+        - `04_interannotator_std.png` (63 KB) - Distribución de desacuerdo inter-anotador
+    - Código completamente tipado (PEP 585: list[float], dict[str, Any], etc.)
+    - Docstrings Google-style en todas las funciones helper
+    - Constantes como Final[] para evitar magic numbers
+
+### Changed
+
+- **Dependencies** - Nuevas librerías para ejecutar notebooks:
+    - `jupyter` (>= 1.1.0) - Entorno Jupyter para ejecutar .ipynb
+    - `nbconvert` (>= 7.16.0) - Conversión y ejecución de notebooks (para CI/CD)
+
 ## [0.2.0] - 2026-04-11
 
 ### Added
