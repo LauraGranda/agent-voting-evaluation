@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Dataset Transformation Pipeline (HU-02)** - Conversión de dataset raw a formato DeepEval `ConversationalTestCase`:
+    - `scripts/transform_dataset.py` - Pipeline que convierte 900 pares contexto-respuesta:
+        - Carga dataset raw desde `data/raw/dailydialog_zhao/dataset.json`
+        - Construye objetos `ConversationalTestCase` preservando historias de conversación
+        - Mapea turnos (alternancia user/assistant) preservando contexto completo
+        - Almacena métricas humanas en `additional_metadata` para análisis posterior
+        - Serializa a `data/processed/deepeval_test_cases.json` con campos: input, actual_output, turns, metadata
+        - Valida integridad: count match, ids preservados, scores exactos, rango [1.0, 5.0]
+    - `tests/test_transform.py` - Suite completa con 26 tests:
+        - **TestBuildTurns** (5 tests): count, alternating roles, content preservation, edge cases
+        - **TestEntryToTestCase** (9 tests): transformación de 3 tipos de entries, metadata preservation
+        - **TestSerializeTestCase** (4 tests): JSON serializable, keys requeridas, structure
+        - **TestValidateTransform** (5 tests): passing, count mismatch, score mismatch, null response, wrong ID
+        - **TestLoadDataset** (2 tests): file reading, error handling
+        - **Integration test** (1 test): full pipeline end-to-end
+    - Código completamente tipado (PEP 585) y con docstrings Google-style en todas las funciones
+    - Constantes con Final[] para evitar magic numbers (PLR2004 compliance)
+
+### Changed
+
+- **Dependencies** - Nuevas librerías para ejecutar notebooks:
+    - `jupyter` (>= 1.1.0) - Entorno Jupyter para ejecutar .ipynb
+    - `nbconvert` (>= 7.16.0) - Conversión y ejecución de notebooks (para CI/CD)
+
+## [0.3.0] - 2026-04-12
+
+### Added
+
 - **Exploratory Data Analysis Notebook (Dataset_exploration branch)** - Análisis completo de las puntuaciones de relevancia humana:
     - `notebooks/01_eda.ipynb` - Notebook Jupyter con 16 celdas (243 KB):
         - Análisis descriptivo: mean, median, std, min, max, Q1, Q3, IQR, skewness
@@ -28,12 +56,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Código completamente tipado (PEP 585: list[float], dict[str, Any], etc.)
     - Docstrings Google-style en todas las funciones helper
     - Constantes como Final[] para evitar magic numbers
-
-### Changed
-
-- **Dependencies** - Nuevas librerías para ejecutar notebooks:
-    - `jupyter` (>= 1.1.0) - Entorno Jupyter para ejecutar .ipynb
-    - `nbconvert` (>= 7.16.0) - Conversión y ejecución de notebooks (para CI/CD)
 
 ## [0.2.0] - 2026-04-11
 
