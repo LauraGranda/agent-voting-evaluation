@@ -9,6 +9,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **G-Eval Relevance Prompt Pilot (HU-03)** - Diseño, ejecución y selección del prompt final de evaluación de relevancia para G-Eval sobre DailyDialog-Zhao, con evaluador `gpt-4o` (sucesor directo de GPT-4 en Liu et al., EMNLP 2023):
+    - `configs/prompts/select_pilot_sample.py` - Sampler estratificado determinista (seed=42) que produce 20 entradas distribuidas en 5 estratos × 4 entradas:
+        - Estrato 1: top-4 `ground-truth` por `human_score`
+        - Estrato 2: bottom-4 `negative-sample` por `human_score`
+        - Estrato 3: IA con `human_score >= 4.0`, balanceado entre familias GPT2/S2S/HRED/VHRED
+        - Estrato 4: IA con `2.5 <= human_score <= 3.5`, balanceado entre familias
+        - Estrato 5: IA con `human_score <= 2.0`, balanceado entre familias
+    - Tres versiones iteradas del prompt G-Eval en `configs/prompts/`:
+        - `v1_generic.txt` (526 B) - baseline genérico, rúbrica 1-5 sin CoT
+        - `v2_dialogue_cot.txt` (1861 B) - tarea multi-turno + definición 3-partes (a/b/c) + 5 pasos CoT
+        - `v3_full_cot_anchored.txt` (5125 B) - V2 + rúbrica anclada por score + 3 ejemplos trabajados del sample piloto
+    - `configs/prompts/pilot_sample.json` - Las 20 entradas sampleadas, cada una taggeada con `stratum`
+    - `configs/prompts/pilot_results_v{1,2,3}.json` - Scores por entrada (raw `[0,1]` y reescalado a `[1,5]`), `human_score`, delta y `reason` del evaluador (20/20 exitosos en las tres versiones)
+    - `configs/prompts/geval_relevance_prompt.txt` - Prompt final seleccionado (copia de V3) para el run completo de 900 pares
+    - `scripts/build_pilot_notebook.py` - Generador programático del notebook (29 celdas como strings en Python) para mantener el source diff-reviewable
+    - `notebooks/02_prompt_pilot.ipynb` (145 KB) - Notebook ejecutado con outputs embebidos, organizado en 11 secciones numeradas en español:
+        1. Setup y carga del sample piloto
+        2. Distribución por estrato
+        3. Catálogo de prompts y estimación de costo
+        4. Helpers reutilizables
+        5. Piloto V1 - baseline genérico
+        6. Piloto V2 - CoT consciente del diálogo
+        7. Piloto V3 - CoT completo + rúbrica anclada
+        8. Comparación cuantitativa y visual (scatter 1x3 coloreado por estrato)
+        9. Prueba de Steiger - comparación de correlaciones
+        10. Selección final: V3
+        11. Conclusiones
+    - Patrón de carga cacheada en las celdas de piloto: lee `pilot_results_v*.json` si existe, evita re-llamar la API en re-ejecuciones
+    - Figura `outputs/figures/05_prompt_pilot_comparison.png` (150 dpi, embebida en el output de la celda 23)
+    - `docs/prompt_iterations.md` - Documentación metodológica auto-generada desde la celda 28:
+        - Tabla por versión con `Changes from previous`, Spearman rho, p-value, mean/max |delta| y observaciones por estrato
+        - Tabla de Steiger (Fisher Z) con las tres comparaciones pairwise
+        - Sección "Selección Final" con los 4 argumentos metodológicos
+    - **Resultados del piloto** (n=20, 20/20 exitosos en cada versión):
+        - V1 Spearman rho = 0.937 (p < 0.0001)
+        - V2 Spearman rho = 0.904 (p < 0.0001)
+        - V3 Spearman rho = 0.899 (p < 0.0001)
+        - Prueba de Steiger: las tres comparaciones pairwise son NO significativas (todos p > 0.45)
+    - **Versión seleccionada: V3** por criterios metodológicos (ausencia de diferencia estadística entre versiones):
+        - Transparencia: CoT auditable por par evaluado
+        - Robustez: rúbrica anclada reduce varianza a n=900
+        - Comparabilidad: razonamiento explícito alineado con el baseline agéntico
+        - Contribución: fidelidad al diseño original de G-Eval (Liu et al., EMNLP 2023)
+    - Costo del piloto: ~\$1.80 (una vez). Estimación del experimento completo con V3: ~\$4-6
+
 - **Dataset Transformation Pipeline (HU-02)** - Conversión de dataset raw a formato DeepEval `ConversationalTestCase`:
     - `scripts/transform_dataset.py` - Pipeline que convierte 900 pares contexto-respuesta:
         - Carga dataset raw desde `data/raw/dailydialog_zhao/dataset.json`
@@ -29,6 +74,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Ruff configuration** (`.code_quality/ruff.toml`) - `[lint.per-file-ignores]` acotado a los archivos nuevos del piloto para permitir notación científica y thresholds estadísticos legítimos; el resto del codebase mantiene los `select`/`ignore` originales:
+    - `notebooks/**`: `RUF001`, `RUF002` (letras griegas y signos `×`/`–`/`—` en strings y docstrings), `PLR2004` (thresholds como 0.05, 0.4, 0.7, 1.5), `B018`
+    - `scripts/build_pilot_notebook.py`: `RUF001`, `RUF002`, `PLR2004` (el builder embebe el source del notebook como strings literales, por lo que hereda los mismos casos)
+    - `configs/prompts/select_pilot_sample.py`: `PLR2004`, `S311` (`random.Random` con seed=42 para reproducibilidad, no criptografía)
+- `.gitignore` - añadido `.deepeval/` para excluir el directorio de telemetría que DeepEval crea bajo el cwd al instanciar la métrica
+- `scripts/transform_dataset.py` - `zip(..., strict=True)` tras `ruff --fix` (B905); seguro porque las longitudes ya se asertan antes del zip
 - **Dependencies** - Nuevas librerías para ejecutar notebooks:
     - `jupyter` (>= 1.1.0) - Entorno Jupyter para ejecutar .ipynb
     - `nbconvert` (>= 7.16.0) - Conversión y ejecución de notebooks (para CI/CD)
