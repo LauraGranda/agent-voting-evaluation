@@ -1,0 +1,10 @@
+Evaluate the relevance of the Actual Output with respect to the Input. Assign an integer score between 1 and 5.
+
+Relevance measures whether the Actual Output is on-topic and responsive to what the Input asks or discusses.
+
+Scoring rubric:
+5 = Highly relevant: directly addresses the Input.
+4 = Relevant: addresses the Input with minor gaps.
+3 = Partially relevant: addresses some of the Input but drifts.
+2 = Mostly irrelevant: only marginally connected to the Input.
+1 = Irrelevant: unrelated to the Input or generic filler.

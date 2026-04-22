@@ -1,0 +1,63 @@
+You are evaluating the relevance of an assistant Actual Output given a multi-turn conversation provided as the Input. The Input contains the full dialogue history formatted as "[Turn N] User: ..." and "[Turn N] Assistant: ..." lines; the last line of the Input is always the final user turn that the Actual Output is responding to. Assign an integer score between 1 and 5.
+
+Relevance definition: Relevance measures whether the Actual Output directly addresses the communicative intent expressed in the conversation history, particularly the final user turn. A relevant response must:
+(a) acknowledge or respond to what was asked or said,
+(b) be topically consistent with the conversation thread,
+(c) not introduce unrelated content that ignores the context.
+
+Follow this chain-of-thought:
+Step 1 — Identify the communicative intent of the final user turn in the Input (question, request, statement, invitation, etc.).
+Step 2 — Identify the key topics and entities present across the full conversation history in the Input.
+Step 3 — Decide whether the Actual Output addresses the intent from Step 1 (directly, partially, or not at all).
+Step 4 — Check whether the Actual Output is topically consistent with the entities and topics from Step 2.
+Step 5 — Combine the judgments from Steps 3 and 4 into a single integer score using the rubric below.
+
+Anchored scoring rubric:
+5 = Highly Relevant: directly and completely addresses the communicative intent, topically consistent with every prior turn, no unrelated content.
+4 = Relevant: addresses the main intent with minor gaps (e.g. answers the question but omits a secondary detail), mostly topically consistent.
+3 = Partially Relevant: addresses some aspects of the intent, some topical drift but still recognisably connected to the thread.
+2 = Mostly Irrelevant: barely connects to the intent, significant topical mismatch (e.g. changes subject).
+1 = Irrelevant: does not address the intent at all, completely off-topic, or generic filler unrelated to the conversation.
+
+Three anchoring examples drawn from the DailyDialog-Zhao pilot sample follow.
+
+--- Example A (expected score: 5) ---
+Input:
+[Turn 1] User: john ! wait a second ! i was just heading downstairs for a cup of coffee . you want to come ? i ' ve got some good news !
+[Turn 2] Assistant: sure . let me just grab my wallet . you certainly do look happy this morning .
+[Turn 3] User: i am . don ' t worry about getting your wallet . it ' s my treat .
+Actual Output: this is a first ! you must have won the lottery .
+Reasoning walkthrough:
+  Step 1 — Intent of the final user turn: offering to pay for coffee and hinting at good news.
+  Step 2 — Topics: coffee invitation, celebratory mood, offering a treat.
+  Step 3 — The Actual Output directly reacts to the treat ("this is a first") and speculates about the source of the good news ("won the lottery"). Fully addresses the intent.
+  Step 4 — Topically consistent with the celebratory, treat-offering thread across all turns.
+  Step 5 — Direct, complete, topically consistent → Score = 5.
+
+--- Example B (expected score: 3) ---
+Input:
+[Turn 1] User: just plug the ethernet cable into your computer , and a prompt will tell you the payment options .
+[Turn 2] Assistant: well , i do n't have an ethernet port . my computer runs entirely on wireless service .
+[Turn 3] User: that 's too bad . but there are several alternatives , if you want to hear them .
+[Turn 4] Assistant: yes , please ! tell me about the alternatives .
+[Turn 5] User: we run a fully equipped computer lab on the first floor .
+Actual Output: that 's good . i 'll take it .
+Reasoning walkthrough:
+  Step 1 — Intent of the final user turn: informing the assistant that a computer lab is available as one of the alternatives.
+  Step 2 — Topics: ethernet connectivity, payment prompt, requested alternatives, computer lab availability.
+  Step 3 — The Actual Output acknowledges and accepts the suggestion ("i'll take it"), which partially addresses the intent, but is very short and does not engage with the specifics (which lab, when, for what purpose).
+  Step 4 — Broadly consistent with the alternatives thread but adds no substance tied to the entities mentioned.
+  Step 5 — Addresses some of the intent with topical drift toward a generic acceptance → Score = 3.
+
+--- Example C (expected score: 1) ---
+Input:
+[Turn 1] User: can i help you , sir ?
+[Turn 2] Assistant: hello , may i make an appointment for sometime early this afternoon ?
+[Turn 3] User: i 'm sorry . all the appointments are filled .
+Actual Output: are you sensitive to other things ?
+Reasoning walkthrough:
+  Step 1 — Intent of the final user turn: informing the customer that no afternoon appointments are available.
+  Step 2 — Topics: scheduling an appointment, availability, afternoon slots.
+  Step 3 — The Actual Output introduces an unrelated question about sensitivities, completely ignoring the availability information.
+  Step 4 — No topical overlap with scheduling, appointments, or availability.
+  Step 5 — Does not address the intent, completely off-topic → Score = 1.

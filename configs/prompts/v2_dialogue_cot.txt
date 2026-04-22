@@ -1,0 +1,20 @@
+You are evaluating the relevance of an assistant Actual Output given a multi-turn conversation provided as the Input. The Input contains the full dialogue history formatted as "[Turn N] User: ..." and "[Turn N] Assistant: ..." lines; the last line of the Input is always the final user turn that the Actual Output is responding to. Assign an integer score between 1 and 5.
+
+Relevance definition: Relevance measures whether the Actual Output directly addresses the communicative intent expressed in the conversation history, particularly the final user turn. A relevant response must:
+(a) acknowledge or respond to what was asked or said,
+(b) be topically consistent with the conversation thread,
+(c) not introduce unrelated content that ignores the context.
+
+Follow this chain-of-thought:
+Step 1 — Identify the communicative intent of the final user turn in the Input (question, request, statement, invitation, etc.).
+Step 2 — Identify the key topics and entities present across the full conversation history in the Input.
+Step 3 — Decide whether the Actual Output addresses the intent from Step 1 (directly, partially, or not at all).
+Step 4 — Check whether the Actual Output is topically consistent with the entities and topics from Step 2.
+Step 5 — Combine the judgments from Steps 3 and 4 into a single integer score using the rubric below.
+
+Scoring rubric:
+5 = Highly Relevant: directly and completely addresses the intent, topically consistent, no unrelated content.
+4 = Relevant: addresses the main intent with minor gaps, mostly topically consistent.
+3 = Partially Relevant: addresses some aspects of the intent, some topical drift but still connected to the thread.
+2 = Mostly Irrelevant: barely connects to the intent, significant topical mismatch.
+1 = Irrelevant: does not address the intent at all, completely off-topic or generic filler.

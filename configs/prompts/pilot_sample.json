@@ -1,0 +1,838 @@
+[
+  {
+    "input": "i am . don ' t worry about getting your wallet . it ' s my treat .",
+    "actual_output": "this is a first ! you must have won the lottery .",
+    "turns": [
+      {
+        "role": "user",
+        "content": "john ! wait a second ! i was just heading downstairs for a cup of coffee . you want to come ? i ' ve got some good news !"
+      },
+      {
+        "role": "assistant",
+        "content": "sure . let me just grab my wallet . you certainly do look happy this morning ."
+      },
+      {
+        "role": "user",
+        "content": "i am . don ' t worry about getting your wallet . it ' s my treat ."
+      },
+      {
+        "role": "assistant",
+        "content": "this is a first ! you must have won the lottery ."
+      }
+    ],
+    "metadata": {
+      "human_score": 5,
+      "raw_relevance_scores": [
+        5,
+        5,
+        5,
+        5
+      ],
+      "human_appropriateness_score": 3.5,
+      "raw_appropriateness_scores": [
+        2,
+        4,
+        5,
+        3
+      ],
+      "conversation_id": "conv_97_ground-truth",
+      "model": "ground-truth"
+    },
+    "stratum": 1
+  },
+  {
+    "input": "during that horrible rainstorm last night , my roof began to leak .",
+    "actual_output": "what room was the leak in ?",
+    "turns": [
+      {
+        "role": "user",
+        "content": "hello , may i speak with the property manager , please ?"
+      },
+      {
+        "role": "assistant",
+        "content": "hello , this is the property manager . how may i help you ?"
+      },
+      {
+        "role": "user",
+        "content": "during that horrible rainstorm last night , my roof began to leak ."
+      },
+      {
+        "role": "assistant",
+        "content": "what room was the leak in ?"
+      }
+    ],
+    "metadata": {
+      "human_score": 5,
+      "raw_relevance_scores": [
+        5,
+        5,
+        5,
+        5
+      ],
+      "human_appropriateness_score": 4,
+      "raw_appropriateness_scores": [
+        4,
+        3,
+        5,
+        4
+      ],
+      "conversation_id": "conv_94_ground-truth",
+      "model": "ground-truth"
+    },
+    "stratum": 1
+  },
+  {
+    "input": "did your meal meet with your approval ?",
+    "actual_output": "our meal was absolutely perfect !",
+    "turns": [
+      {
+        "role": "user",
+        "content": "did your meal meet with your approval ?"
+      },
+      {
+        "role": "assistant",
+        "content": "our meal was absolutely perfect !"
+      }
+    ],
+    "metadata": {
+      "human_score": 5,
+      "raw_relevance_scores": [
+        5,
+        5,
+        5,
+        5
+      ],
+      "human_appropriateness_score": 4.25,
+      "raw_appropriateness_scores": [
+        4,
+        5,
+        3,
+        5
+      ],
+      "conversation_id": "conv_91_ground-truth",
+      "model": "ground-truth"
+    },
+    "stratum": 1
+  },
+  {
+    "input": "the wine choices are posted on the little menu in the middle of the table .",
+    "actual_output": "we can make a number of mixed drinks at our bar .",
+    "turns": [
+      {
+        "role": "user",
+        "content": "can i take your drink order ?"
+      },
+      {
+        "role": "assistant",
+        "content": "where is your wine list ?"
+      },
+      {
+        "role": "user",
+        "content": "the wine choices are posted on the little menu in the middle of the table ."
+      },
+      {
+        "role": "assistant",
+        "content": "do you have any mixed drinks available here ?"
+      },
+      {
+        "role": "assistant",
+        "content": "we can make a number of mixed drinks at our bar ."
+      }
+    ],
+    "metadata": {
+      "human_score": 5,
+      "raw_relevance_scores": [
+        5,
+        5,
+        5,
+        5
+      ],
+      "human_appropriateness_score": 5,
+      "raw_appropriateness_scores": [
+        5,
+        5,
+        5,
+        5
+      ],
+      "conversation_id": "conv_8_ground-truth",
+      "model": "ground-truth"
+    },
+    "stratum": 1
+  },
+  {
+    "input": "i 'm sorry . all the appointments are filled .",
+    "actual_output": "are you sensitive to other things ?",
+    "turns": [
+      {
+        "role": "user",
+        "content": "can i help you , sir ?"
+      },
+      {
+        "role": "assistant",
+        "content": "hello , may i make an appointment for sometime early this afternoon ?"
+      },
+      {
+        "role": "user",
+        "content": "i 'm sorry . all the appointments are filled ."
+      },
+      {
+        "role": "assistant",
+        "content": "are you sensitive to other things ?"
+      }
+    ],
+    "metadata": {
+      "human_score": 1,
+      "raw_relevance_scores": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "human_appropriateness_score": 1.75,
+      "raw_appropriateness_scores": [
+        1,
+        1,
+        3,
+        2
+      ],
+      "conversation_id": "conv_1_negative-sample",
+      "model": "negative-sample"
+    },
+    "stratum": 2
+  },
+  {
+    "input": "i ' ve had this idea for some time now .",
+    "actual_output": "even silverware ?",
+    "turns": [
+      {
+        "role": "user",
+        "content": "give me a short haircut ."
+      },
+      {
+        "role": "assistant",
+        "content": "do you know how short you want your hair to be ?"
+      },
+      {
+        "role": "user",
+        "content": "i want you to cut it to a few inches long ."
+      },
+      {
+        "role": "assistant",
+        "content": "that 's pretty short . are you sure about this ?"
+      },
+      {
+        "role": "user",
+        "content": "i ' ve had this idea for some time now ."
+      },
+      {
+        "role": "assistant",
+        "content": "even silverware ?"
+      }
+    ],
+    "metadata": {
+      "human_score": 1,
+      "raw_relevance_scores": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "human_appropriateness_score": 1.25,
+      "raw_appropriateness_scores": [
+        2,
+        1,
+        1,
+        1
+      ],
+      "conversation_id": "conv_22_negative-sample",
+      "model": "negative-sample"
+    },
+    "stratum": 2
+  },
+  {
+    "input": "may i help you ?",
+    "actual_output": "yes . you must fill up the car yourself .",
+    "turns": [
+      {
+        "role": "user",
+        "content": "may i help you ?"
+      },
+      {
+        "role": "assistant",
+        "content": "i would like to check out these books ."
+      },
+      {
+        "role": "assistant",
+        "content": "yes . you must fill up the car yourself ."
+      }
+    ],
+    "metadata": {
+      "human_score": 1,
+      "raw_relevance_scores": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "human_appropriateness_score": 2.25,
+      "raw_appropriateness_scores": [
+        3,
+        1,
+        4,
+        1
+      ],
+      "conversation_id": "conv_28_negative-sample",
+      "model": "negative-sample"
+    },
+    "stratum": 2
+  },
+  {
+    "input": "let me see ... perhaps i could fit you in at five thirty .",
+    "actual_output": "what kind of chocolate do you want ?",
+    "turns": [
+      {
+        "role": "user",
+        "content": "can i help you , sir ?"
+      },
+      {
+        "role": "assistant",
+        "content": "hello , may i make an appointment for sometime early this afternoon ?"
+      },
+      {
+        "role": "user",
+        "content": "i 'm sorry . all the appointments are filled ."
+      },
+      {
+        "role": "assistant",
+        "content": "oh , what a pity . i 'd like to see the doctor as soon as possible . i have a sharp pain in my chest ."
+      },
+      {
+        "role": "user",
+        "content": "let me see ... perhaps i could fit you in at five thirty ."
+      },
+      {
+        "role": "assistant",
+        "content": "what kind of chocolate do you want ?"
+      }
+    ],
+    "metadata": {
+      "human_score": 1,
+      "raw_relevance_scores": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "human_appropriateness_score": 2,
+      "raw_appropriateness_scores": [
+        1,
+        2,
+        3,
+        2
+      ],
+      "conversation_id": "conv_36_negative-sample",
+      "model": "negative-sample"
+    },
+    "stratum": 2
+  },
+  {
+    "input": "for the past week my cable has n't been working .",
+    "actual_output": "what is the problem ?",
+    "turns": [
+      {
+        "role": "user",
+        "content": "hello , i am calling about my cable service ."
+      },
+      {
+        "role": "assistant",
+        "content": "what 's the problem ?"
+      },
+      {
+        "role": "user",
+        "content": "for the past week my cable has n't been working ."
+      },
+      {
+        "role": "assistant",
+        "content": "what is the problem ?"
+      }
+    ],
+    "metadata": {
+      "human_score": 4.75,
+      "raw_relevance_scores": [
+        5,
+        5,
+        4,
+        5
+      ],
+      "human_appropriateness_score": 3.25,
+      "raw_appropriateness_scores": [
+        4,
+        3,
+        3,
+        3
+      ],
+      "conversation_id": "conv_30_GPT2_small top_temp1.0_k0_p0.9",
+      "model": "GPT2_small top_temp1.0_k0_p0.9"
+    },
+    "stratum": 3
+  },
+  {
+    "input": "i appreciate that .",
+    "actual_output": "you are welcome .",
+    "turns": [
+      {
+        "role": "user",
+        "content": "my boss offered me a promotion , and i took it ."
+      },
+      {
+        "role": "assistant",
+        "content": "are you serious ?"
+      },
+      {
+        "role": "user",
+        "content": "yes , i am really excited ."
+      },
+      {
+        "role": "assistant",
+        "content": "that 's great . congratulations ."
+      },
+      {
+        "role": "user",
+        "content": "i appreciate that ."
+      },
+      {
+        "role": "assistant",
+        "content": "you are welcome ."
+      }
+    ],
+    "metadata": {
+      "human_score": 4.75,
+      "raw_relevance_scores": [
+        5,
+        5,
+        5,
+        4
+      ],
+      "human_appropriateness_score": 2.75,
+      "raw_appropriateness_scores": [
+        2,
+        5,
+        1,
+        3
+      ],
+      "conversation_id": "conv_14_S2S_attn greedy_temp1.0_k0_p0.0",
+      "model": "S2S_attn greedy_temp1.0_k0_p0.0"
+    },
+    "stratum": 3
+  },
+  {
+    "input": "i would like to meet on monday .",
+    "actual_output": "ok . i 'll be expecting you at 9 30 .",
+    "turns": [
+      {
+        "role": "user",
+        "content": "i would like to make an appointment for a project meeting ."
+      },
+      {
+        "role": "assistant",
+        "content": "of course , i have monday or tuesday available . what day would be best for you ?"
+      },
+      {
+        "role": "user",
+        "content": "i would like to meet on monday ."
+      },
+      {
+        "role": "assistant",
+        "content": "ok . i 'll be expecting you at 9 30 ."
+      }
+    ],
+    "metadata": {
+      "human_score": 4,
+      "raw_relevance_scores": [
+        4,
+        5,
+        5,
+        2
+      ],
+      "human_appropriateness_score": 3.5,
+      "raw_appropriateness_scores": [
+        3,
+        3,
+        5,
+        3
+      ],
+      "conversation_id": "conv_41_HRED_attn greedy_temp1.0_k0_p0.0",
+      "model": "HRED_attn greedy_temp1.0_k0_p0.0"
+    },
+    "stratum": 3
+  },
+  {
+    "input": "i found cockroaches in my room .",
+    "actual_output": "tell me about the that .",
+    "turns": [
+      {
+        "role": "user",
+        "content": "i have a little problem with room 507 ."
+      },
+      {
+        "role": "assistant",
+        "content": "what exactly seems to be the problem , mr . sandals ?"
+      },
+      {
+        "role": "user",
+        "content": "i found cockroaches in my room ."
+      },
+      {
+        "role": "assistant",
+        "content": "tell me about the that ."
+      }
+    ],
+    "metadata": {
+      "human_score": 4,
+      "raw_relevance_scores": [
+        5,
+        2,
+        5,
+        4
+      ],
+      "human_appropriateness_score": 2.5,
+      "raw_appropriateness_scores": [
+        5,
+        1,
+        3,
+        1
+      ],
+      "conversation_id": "conv_51_VHRED_attn sample_temp1.0_k0_p0.0",
+      "model": "VHRED_attn sample_temp1.0_k0_p0.0"
+    },
+    "stratum": 3
+  },
+  {
+    "input": "we run a fully equipped computer lab on the first floor .",
+    "actual_output": "that 's good . i 'll take it .",
+    "turns": [
+      {
+        "role": "user",
+        "content": "just plug the ethernet cable into your computer , and a prompt will tell you the payment options ."
+      },
+      {
+        "role": "assistant",
+        "content": "well , i do n't have an ethernet port . my computer runs entirely on wireless service ."
+      },
+      {
+        "role": "user",
+        "content": "that 's too bad . but there are several alternatives , if you want to hear them ."
+      },
+      {
+        "role": "assistant",
+        "content": "yes , please ! tell me about the alternatives ."
+      },
+      {
+        "role": "user",
+        "content": "we run a fully equipped computer lab on the first floor ."
+      },
+      {
+        "role": "assistant",
+        "content": "that 's good . i 'll take it ."
+      }
+    ],
+    "metadata": {
+      "human_score": 3.25,
+      "raw_relevance_scores": [
+        2,
+        4,
+        5,
+        2
+      ],
+      "human_appropriateness_score": 3,
+      "raw_appropriateness_scores": [
+        2,
+        3,
+        5,
+        2
+      ],
+      "conversation_id": "conv_31_GPT2_medium top_temp1.0_k0_p0.5",
+      "model": "GPT2_medium top_temp1.0_k0_p0.5"
+    },
+    "stratum": 4
+  },
+  {
+    "input": "may i help you ?",
+    "actual_output": "please fill out the registration form first . and checking the card , free puff and check .",
+    "turns": [
+      {
+        "role": "user",
+        "content": "may i help you ?"
+      },
+      {
+        "role": "assistant",
+        "content": "i would like to check out these books ."
+      },
+      {
+        "role": "assistant",
+        "content": "please fill out the registration form first . and checking the card , free puff and check ."
+      }
+    ],
+    "metadata": {
+      "human_score": 3.5,
+      "raw_relevance_scores": [
+        4,
+        3,
+        5,
+        2
+      ],
+      "human_appropriateness_score": 4,
+      "raw_appropriateness_scores": [
+        5,
+        3,
+        4,
+        4
+      ],
+      "conversation_id": "conv_28_S2S_attn sample_temp1.0_k0_p0.0",
+      "model": "S2S_attn sample_temp1.0_k0_p0.0"
+    },
+    "stratum": 4
+  },
+  {
+    "input": "do you want beef or lamb ?",
+    "actual_output": "no , i do n't think so .",
+    "turns": [
+      {
+        "role": "user",
+        "content": "do you want any meat today , mrs bird ?"
+      },
+      {
+        "role": "assistant",
+        "content": "yes , please ."
+      },
+      {
+        "role": "user",
+        "content": "do you want beef or lamb ?"
+      },
+      {
+        "role": "assistant",
+        "content": "no , i do n't think so ."
+      }
+    ],
+    "metadata": {
+      "human_score": 2.5,
+      "raw_relevance_scores": [
+        3,
+        4,
+        1,
+        2
+      ],
+      "human_appropriateness_score": 2,
+      "raw_appropriateness_scores": [
+        2,
+        3,
+        1,
+        2
+      ],
+      "conversation_id": "conv_20_HRED_attn greedy_temp1.0_k0_p0.0",
+      "model": "HRED_attn greedy_temp1.0_k0_p0.0"
+    },
+    "stratum": 4
+  },
+  {
+    "input": "that ' s the one . it seems that everyone is anxious to get to new york tonight .",
+    "actual_output": "that ' s fine . i ' ll take it .",
+    "turns": [
+      {
+        "role": "user",
+        "content": "i ' m terribly sorry , sir , but i ' m afraid it is true . that flight has been canceled . would you like to try to book tomorrow ' s flight ?"
+      },
+      {
+        "role": "assistant",
+        "content": "no way ! i worked very hard so that i could leave on today ' s flight . are there seats on another airline ?"
+      },
+      {
+        "role": "user",
+        "content": "it ' s possible . if you would like to book with another airline the line is right over there ."
+      },
+      {
+        "role": "assistant",
+        "content": "you mean the line over there of about 200 people ? !"
+      },
+      {
+        "role": "user",
+        "content": "that ' s the one . it seems that everyone is anxious to get to new york tonight ."
+      },
+      {
+        "role": "assistant",
+        "content": "that ' s fine . i ' ll take it ."
+      }
+    ],
+    "metadata": {
+      "human_score": 3.5,
+      "raw_relevance_scores": [
+        5,
+        4,
+        3,
+        2
+      ],
+      "human_appropriateness_score": 2.25,
+      "raw_appropriateness_scores": [
+        1,
+        4,
+        2,
+        2
+      ],
+      "conversation_id": "conv_24_VHRED_attn greedy_temp1.0_k0_p0.0",
+      "model": "VHRED_attn greedy_temp1.0_k0_p0.0"
+    },
+    "stratum": 4
+  },
+  {
+    "input": "wake up , it 's time for school .",
+    "actual_output": "what 's up ?",
+    "turns": [
+      {
+        "role": "user",
+        "content": "wake up , it 's time for school ."
+      },
+      {
+        "role": "assistant",
+        "content": "what 's up ?"
+      }
+    ],
+    "metadata": {
+      "human_score": 1.75,
+      "raw_relevance_scores": [
+        1,
+        3,
+        1,
+        2
+      ],
+      "human_appropriateness_score": 1.75,
+      "raw_appropriateness_scores": [
+        1,
+        3,
+        1,
+        2
+      ],
+      "conversation_id": "conv_67_GPT2_medium greedy_temp1.0_k0_p0.0",
+      "model": "GPT2_medium greedy_temp1.0_k0_p0.0"
+    },
+    "stratum": 5
+  },
+  {
+    "input": "the one smoking a cigar .",
+    "actual_output": "have you tasted any good in mind ?",
+    "turns": [
+      {
+        "role": "user",
+        "content": "i wonder who that man is ."
+      },
+      {
+        "role": "assistant",
+        "content": "which man ?"
+      },
+      {
+        "role": "user",
+        "content": "the one smoking a cigar ."
+      },
+      {
+        "role": "assistant",
+        "content": "have you tasted any good in mind ?"
+      }
+    ],
+    "metadata": {
+      "human_score": 1,
+      "raw_relevance_scores": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "human_appropriateness_score": 2,
+      "raw_appropriateness_scores": [
+        2,
+        2,
+        3,
+        1
+      ],
+      "conversation_id": "conv_86_S2S sample_temp1.0_k0_p0.0",
+      "model": "S2S sample_temp1.0_k0_p0.0"
+    },
+    "stratum": 5
+  },
+  {
+    "input": "what 's ron marston like , pauline ?",
+    "actual_output": "does he get the message for the message ?",
+    "turns": [
+      {
+        "role": "user",
+        "content": "what 's ron marston like , pauline ?"
+      },
+      {
+        "role": "assistant",
+        "content": "he 's awful ! he telephoned me four times yesterday , and three times the day before yesterday . he telephoned the office yesterday morning and yesterday afternoon . my boss answered the telephone ."
+      },
+      {
+        "role": "assistant",
+        "content": "does he get the message for the message ?"
+      }
+    ],
+    "metadata": {
+      "human_score": 2,
+      "raw_relevance_scores": [
+        1,
+        2,
+        4,
+        1
+      ],
+      "human_appropriateness_score": 2,
+      "raw_appropriateness_scores": [
+        1,
+        2,
+        4,
+        1
+      ],
+      "conversation_id": "conv_26_HRED_attn sample_temp1.0_k0_p0.0",
+      "model": "HRED_attn sample_temp1.0_k0_p0.0"
+    },
+    "stratum": 5
+  },
+  {
+    "input": "congratulations , guy .",
+    "actual_output": "not at all . but nobody talking to me .",
+    "turns": [
+      {
+        "role": "user",
+        "content": "jim . i heard you got a promotion !"
+      },
+      {
+        "role": "assistant",
+        "content": "yeah , i ' m going to be running the walker avenue branch ."
+      },
+      {
+        "role": "user",
+        "content": "congratulations , guy ."
+      },
+      {
+        "role": "assistant",
+        "content": "not at all . but nobody talking to me ."
+      }
+    ],
+    "metadata": {
+      "human_score": 1.25,
+      "raw_relevance_scores": [
+        1,
+        1,
+        1,
+        2
+      ],
+      "human_appropriateness_score": 1.5,
+      "raw_appropriateness_scores": [
+        1,
+        2,
+        1,
+        2
+      ],
+      "conversation_id": "conv_18_VHRED_attn sample_temp1.0_k0_p0.0",
+      "model": "VHRED_attn sample_temp1.0_k0_p0.0"
+    },
+    "stratum": 5
+  }
+]
