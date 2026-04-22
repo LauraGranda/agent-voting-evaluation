@@ -93,3 +93,12 @@ max-complexity = 10
 
 [lint.isort]
 known-third-party = ["fastapi", "pydantic"]
+
+[lint.per-file-ignores]
+# Notebooks legitimately use Greek letters (ρ), multiplication sign (×), en-dash
+# in scientific notation; statistical thresholds (0.05, 0.4, ...) are not magic.
+"notebooks/**" = ["RUF001", "RUF002", "PLR2004", "B018"]
+# The builder embeds notebook source as string literals, so the same exemptions
+# apply; random.Random is used for reproducibility (seed=42), not crypto.
+"scripts/build_pilot_notebook.py" = ["RUF001", "RUF002", "PLR2004"]
+"configs/prompts/select_pilot_sample.py" = ["PLR2004", "S311"]

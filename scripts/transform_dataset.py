@@ -136,7 +136,7 @@ def validate_transform(original: list[dict[str, Any]], transformed: list[dict[st
             f"Expected {EXPECTED_TOTAL_ENTRIES}, got {len(transformed)}"
         )
 
-    for i, (orig, trans) in enumerate(zip(original, transformed, strict=False)):
+    for i, (orig, trans) in enumerate(zip(original, transformed, strict=True)):
         assert trans["metadata"]["conversation_id"] == orig["conversation_id"], (
             f"Entry {i}: conversation_id mismatch"
         )
