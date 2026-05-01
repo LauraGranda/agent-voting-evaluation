@@ -9,6 +9,11 @@ The pilot covers five strata designed to stress-test a relevance evaluator:
 
 The script is deterministic (seed=42) and writes to
 ``configs/prompts/pilot_sample.json``.
+
+Speaker labels in the output (``metadata.response_speaker``, "A" or "B") are
+the raw anonymous interlocutor identifiers inherited from the DailyDialog-Zhao
+corpus — not gender or persona markers. See ``data/README.md`` for the full
+schema description.
 """
 
 from __future__ import annotations
@@ -120,9 +125,10 @@ def select_evenly_across_families(
             )
             continue
         pool_sorted = sorted(pool, key=lambda e: e["metadata"]["conversation_id"])
-        choice = rng.choice(pool_sorted)
+        choice_index = rng.randrange(len(pool_sorted))
+        choice = pool_sorted[choice_index]
         picked.append(choice)
-        leftovers.extend(e for e in pool_sorted if e is not choice)
+        leftovers.extend(pool_sorted[:choice_index] + pool_sorted[choice_index + 1 :])
 
     while len(picked) < n and leftovers:
         rng.shuffle(leftovers)

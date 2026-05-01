@@ -185,7 +185,9 @@ def parse_annotations(json_path: Path) -> list[dict[str, Any]]:
         # In DailyDialog-Zhao this is always the speaker opposite to the last
         # context turn, but we read it from the data rather than inferring.
         reference = dialog_data.get("reference", ["", ""])
-        response_speaker = reference[0] if reference else ""
+        response_speaker = (
+            reference[0] if isinstance(reference, list | tuple) and len(reference) > 0 else ""
+        )
 
         # Iterate over responses (models)
         for model_name, model_data in dialog_data.get("responses", {}).items():
@@ -372,7 +374,7 @@ CC BY-NC-SA 4.0 - academic non-commercial use only
 | conversation_id | string | Unique ID: conv_{{index}}_{{model}} |
 | turns | list[dict] | Context turns in order, each {{"speaker": str, "text": str}} |
 | response | string | Model-generated response |
-| response_speaker | string | Speaker who authored the response ("A" or "B") |
+| response_speaker | string | Speaker who authored the response. Values are the raw DailyDialog-Zhao identifiers ("A" or "B") — anonymous interlocutor labels from the source corpus, not gender or persona markers. The `turns[].speaker` field uses the same labels. |
 | model | string | Name of the generative model |
 | human_relevance_score | float | Mean relevance score across annotators (1-5) |
 | raw_relevance_scores | list[int] | Individual annotator relevance scores |

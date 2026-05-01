@@ -34,6 +34,7 @@ def make_raw_dialog_entry(
     dialog_id: str,
     context: list[list[str]],
     models_and_scores: dict[str, list[list[int]]],
+    reference_speaker: str = "A",
 ) -> dict[str, Any]:
     """Build a raw dialog entry matching the actual Zenodo JSON structure.
 
@@ -41,6 +42,9 @@ def make_raw_dialog_entry(
         dialog_id: Identifier for this dialog.
         context: [["speaker", "text"], ...].
         models_and_scores: {"model_name": [[relevance, content, ...], ...]}.
+        reference_speaker: Speaker label of the reference response. Becomes
+            the parsed entry's ``response_speaker``. The DailyDialog-Zhao
+            corpus uses "A" or "B".
 
     Returns:
         Raw dialog dict ready for parsing (100% accuracy).
@@ -61,7 +65,7 @@ def make_raw_dialog_entry(
     return {
         dialog_id: {
             "context": context,
-            "reference": ["A", "reference"],
+            "reference": [reference_speaker, "reference"],
             "responses": responses,
         }
     }
@@ -83,11 +87,12 @@ def make_dataset(
     dataset = []
     for conv_idx in range(n_convs):
         for model in models:
+            turn_entries = [
+                {"speaker": "A" if i % 2 == 0 else "B", "text": f"turn_{i}"} for i in range(3)
+            ]
             entry = {
                 "conversation_id": f"conv_{conv_idx}_{model}",
-                "turns": [
-                    {"speaker": "A" if i % 2 == 0 else "B", "text": f"turn_{i}"} for i in range(3)
-                ],
+                "turns": turn_entries,
                 "response": f"response from {model}",
                 "response_speaker": "B",
                 "model": model,
@@ -247,8 +252,56 @@ class TestParseAnnotations:
             {"speaker": "B", "text": "second turn"},
             {"speaker": "A", "text": "third turn"},
         ]
-        # response_speaker comes from the 'reference' field of the raw entry
-        assert entry["response_speaker"] == "A"
+
+    @pytest.mark.parametrize("reference_speaker", ["A", "B"])
+    def test_parse_response_speaker_from_reference(
+        self, tmp_path: Path, reference_speaker: str
+    ) -> None:
+        """``response_speaker`` is taken from ``reference[0]`` of the raw entry.
+
+        Both "A" and "B" must round-trip correctly: the parser must not
+        hardcode either label, since the source corpus uses both depending
+        on which interlocutor authored the reference response.
+        """
+        raw_data = make_raw_dialog_entry(
+            "dialog_0",
+            [["A", "first turn"], ["B", "second turn"]],
+            {"model": [[3, 3], [3, 3], [3, 3], [3, 3]]},
+            reference_speaker=reference_speaker,
+        )
+        json_file = tmp_path / "test.json"
+        json_file.write_text(json.dumps(raw_data))
+
+        result = parse_annotations(json_file)
+
+        assert result[0]["response_speaker"] == reference_speaker
+
+    def test_parse_response_speaker_missing_reference(self, tmp_path: Path) -> None:
+        """If the raw entry has no ``reference`` field, ``response_speaker`` is empty.
+
+        Defensive: malformed source data should produce an explicit empty
+        marker rather than crashing or silently picking a default speaker.
+        """
+        raw_data = {
+            "dialog_0": {
+                "context": [["A", "text"]],
+                "reference": [],
+                "responses": {
+                    "model": {
+                        "uttr": "response",
+                        "scores": {
+                            "0": {"worker_id": 0, "relevance": 3, "content": 3},
+                        },
+                    }
+                },
+            }
+        }
+        json_file = tmp_path / "test.json"
+        json_file.write_text(json.dumps(raw_data))
+
+        result = parse_annotations(json_file)
+
+        assert result[0]["response_speaker"] == ""
 
     def test_parse_conversation_id_format(self, tmp_path: Path) -> None:
         """ID follows 'conv_{index}_{model}' pattern."""

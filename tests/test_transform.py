@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from deepeval.test_case import ConversationalTestCase
@@ -218,12 +218,46 @@ def test_metadata_model_preserved(single_raw_entry: dict[str, Any]) -> None:
     assert result.additional_metadata["model"] == single_raw_entry["model"]
 
 
-def test_input_is_last_turn(single_raw_entry: dict[str, Any]) -> None:
+def _last_user_turn_text(entry: dict[str, Any]) -> str:
+    """Return the text of the last context turn authored by a non-response speaker."""
+    text = next(
+        t["text"] for t in reversed(entry["turns"]) if t["speaker"] != entry["response_speaker"]
+    )
+    return cast(str, text)
+
+
+def test_input_is_last_user_turn(single_raw_entry: dict[str, Any]) -> None:
     """Input field should match the last user turn from original entry."""
     result = entry_to_test_case(single_raw_entry)
     serialized = serialize_test_case(result)
-    # Last user turn = last context turn authored by the non-response speaker
-    assert serialized["input"] == single_raw_entry["turns"][-1]["text"]
+    assert serialized["input"] == _last_user_turn_text(single_raw_entry)
+
+
+def test_input_skips_trailing_assistant_context_turn() -> None:
+    """When the last context turn is from response_speaker, input must come
+    from the previous user-side turn, not the trailing assistant turn.
+
+    Regression guard: a naive ``turns[-1]["text"]`` would pick the assistant
+    turn here. The serializer must walk back to the last user turn.
+    """
+    entry = {
+        "conversation_id": "conv_trailing_assistant",
+        "turns": [
+            {"speaker": "B", "text": "user says first"},
+            {"speaker": "A", "text": "assistant earlier"},
+            {"speaker": "B", "text": "user says last"},
+            {"speaker": "A", "text": "assistant trailing context"},
+        ],
+        "response": "actual response",
+        "response_speaker": "A",
+        "model": "test_model",
+        "human_relevance_score": 3.0,
+        "raw_relevance_scores": [3, 3, 3, 3],
+        "human_appropriateness_score": 3.0,
+        "raw_appropriateness_scores": [3, 3, 3, 3],
+    }
+    serialized = serialize_test_case(entry_to_test_case(entry))
+    assert serialized["input"] == "user says last"
 
 
 def test_actual_output_is_response(single_raw_entry: dict[str, Any]) -> None:
@@ -371,5 +405,5 @@ def test_integration_full_pipeline(single_raw_entry: dict[str, Any]) -> None:
     serialized = [serialize_test_case(test_case)]
     validate_transform(original, serialized)
     # Verify output structure
-    assert serialized[0]["input"] == single_raw_entry["turns"][-1]["text"]
+    assert serialized[0]["input"] == _last_user_turn_text(single_raw_entry)
     assert serialized[0]["actual_output"] == single_raw_entry["response"]

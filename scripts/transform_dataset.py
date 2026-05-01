@@ -63,6 +63,7 @@ def build_turns(
     """
     result = []
     for turn in turns:
+        # Map response_speaker to assistant role; all others become user.
         role: Literal["user", "assistant"] = (
             "assistant" if turn["speaker"] == response_speaker else "user"
         )
