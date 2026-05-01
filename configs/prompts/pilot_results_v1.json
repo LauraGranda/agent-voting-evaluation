@@ -1,0 +1,202 @@
+[
+  {
+    "conversation_id": "conv_97_ground-truth",
+    "stratum": 1,
+    "model": "ground-truth",
+    "human_score": 5,
+    "geval_score_raw": 0.4995214951643191,
+    "geval_score": 2.9980859806572764,
+    "delta": -2.0019140193427236,
+    "reason": "The Actual Output is somewhat aligned with the Input as it acknowledges the user's happiness and suggests a reason for it, which is consistent with the user's mention of 'good news'. However, it lacks direct engagement with the invitation to join for coffee and does not fully explore the context of the conversation, such as the offer to treat the assistant."
+  },
+  {
+    "conversation_id": "conv_94_ground-truth",
+    "stratum": 1,
+    "model": "ground-truth",
+    "human_score": 5,
+    "geval_score_raw": 0.8077198173196084,
+    "geval_score": 4.230879269278434,
+    "delta": -0.769120730721566,
+    "reason": "The Actual Output is relevant and directly addresses the main topic of the Input, which is the user's issue with a leaking roof. The response seeks additional information necessary for resolving the problem, demonstrating alignment with the user's concern. However, it could be improved by acknowledging the user's situation before asking for more details."
+  },
+  {
+    "conversation_id": "conv_91_ground-truth",
+    "stratum": 1,
+    "model": "ground-truth",
+    "human_score": 5,
+    "geval_score_raw": 0.82672376539624,
+    "geval_score": 4.30689506158496,
+    "delta": -0.6931049384150398,
+    "reason": "The Actual Output directly addresses the main topic of the Input, which is the user's inquiry about the meal's approval. The response is relevant and positive, indicating strong alignment with the user's question. However, it could be slightly improved by explicitly confirming the approval rather than just describing the meal as perfect."
+  },
+  {
+    "conversation_id": "conv_8_ground-truth",
+    "stratum": 1,
+    "model": "ground-truth",
+    "human_score": 5,
+    "geval_score_raw": 0.9203863218034524,
+    "geval_score": 4.68154528721381,
+    "delta": -0.3184547127861901,
+    "reason": "The response directly addresses the user's question about the availability of mixed drinks, indicating that a variety of mixed drinks can be made at the bar. This shows strong alignment with the input, as it is relevant and provides the information requested by the user."
+  },
+  {
+    "conversation_id": "conv_1_negative-sample",
+    "stratum": 2,
+    "model": "negative-sample",
+    "human_score": 1,
+    "geval_score_raw": 0.10307508929627576,
+    "geval_score": 1.412300357185103,
+    "delta": 0.41230035718510294,
+    "reason": "The Actual Output does not address the main topic of scheduling an appointment, as identified in the Input. Instead, it introduces an unrelated question about sensitivity, showing a lack of relevance and alignment with the conversation context."
+  },
+  {
+    "conversation_id": "conv_22_negative-sample",
+    "stratum": 2,
+    "model": "negative-sample",
+    "human_score": 1,
+    "geval_score_raw": 0.010087862070270605,
+    "geval_score": 1.0403514482810825,
+    "delta": 0.0403514482810825,
+    "reason": "The Actual Output 'even silverware?' is completely unrelated to the Input conversation about a haircut. It does not address the user's request or any part of the dialogue, showing no alignment with the main topic."
+  },
+  {
+    "conversation_id": "conv_28_negative-sample",
+    "stratum": 2,
+    "model": "negative-sample",
+    "human_score": 1,
+    "geval_score_raw": 0.036658973632215985,
+    "geval_score": 1.146635894528864,
+    "delta": 0.14663589452886394,
+    "reason": "The Actual Output does not address the main topic of the Input, which is about checking out books. Instead, it provides irrelevant information about filling up a car, showing no alignment with the user's request."
+  },
+  {
+    "conversation_id": "conv_36_negative-sample",
+    "stratum": 2,
+    "model": "negative-sample",
+    "human_score": 1,
+    "geval_score_raw": 0.004603390338081227,
+    "geval_score": 1.0184135613523249,
+    "delta": 0.01841356135232486,
+    "reason": "The Actual Output is completely unrelated to the Input. The Input involves a conversation about scheduling a medical appointment, while the Actual Output asks about chocolate preferences, showing no alignment or relevance."
+  },
+  {
+    "conversation_id": "conv_30_GPT2_small top_temp1.0_k0_p0.9",
+    "stratum": 3,
+    "model": "GPT2_small top_temp1.0_k0_p0.9",
+    "human_score": 4.75,
+    "geval_score_raw": 0.28591448300797884,
+    "geval_score": 2.1436579320319153,
+    "delta": -2.6063420679680847,
+    "reason": "The Actual Output partially aligns with the Input by asking about the problem, which is relevant to the user's issue with their cable service. However, it does not directly address the specific issue mentioned by the user in Turn 3, which is that their cable hasn't been working for the past week. The response lacks specificity and fails to advance the conversation based on the user's detailed complaint."
+  },
+  {
+    "conversation_id": "conv_14_S2S_attn greedy_temp1.0_k0_p0.0",
+    "stratum": 3,
+    "model": "S2S_attn greedy_temp1.0_k0_p0.0",
+    "human_score": 4.75,
+    "geval_score_raw": 0.46857077527949087,
+    "geval_score": 2.8742831011179635,
+    "delta": -1.8757168988820365,
+    "reason": "The Actual Output 'you are welcome' is a polite response to the User's appreciation in Turn 5, showing some relevance. However, it lacks depth and engagement with the main topic of the promotion, missing an opportunity to further the conversation or express enthusiasm."
+  },
+  {
+    "conversation_id": "conv_41_HRED_attn greedy_temp1.0_k0_p0.0",
+    "stratum": 3,
+    "model": "HRED_attn greedy_temp1.0_k0_p0.0",
+    "human_score": 4,
+    "geval_score_raw": 0.6988610837408592,
+    "geval_score": 3.795444334963437,
+    "delta": -0.2045556650365632,
+    "reason": "The response is mostly aligned with the input as it confirms the appointment for Monday, which is relevant to the user's request. However, it lacks confirmation of the user's preferred time, assuming 9:30 without prior agreement, which slightly reduces its alignment with the input."
+  },
+  {
+    "conversation_id": "conv_51_VHRED_attn sample_temp1.0_k0_p0.0",
+    "stratum": 3,
+    "model": "VHRED_attn sample_temp1.0_k0_p0.0",
+    "human_score": 4,
+    "geval_score_raw": 0.17860391692161642,
+    "geval_score": 1.7144156676864657,
+    "delta": -2.285584332313534,
+    "reason": "The response 'tell me about the that' is vague and does not directly address the user's complaint about cockroaches in room 507. It fails to acknowledge the specific issue raised by the user, showing a lack of alignment with the input. The response is not relevant or helpful in resolving the user's problem."
+  },
+  {
+    "conversation_id": "conv_31_GPT2_medium top_temp1.0_k0_p0.5",
+    "stratum": 4,
+    "model": "GPT2_medium top_temp1.0_k0_p0.5",
+    "human_score": 3.25,
+    "geval_score_raw": 0.27756190336651887,
+    "geval_score": 2.1102476134660755,
+    "delta": -1.1397523865339245,
+    "reason": "The Actual Output acknowledges the User's mention of the computer lab but lacks detail or engagement with the alternatives requested by the Assistant. It does not fully address the main topic of providing alternatives to the ethernet connection, showing partial alignment with the Input."
+  },
+  {
+    "conversation_id": "conv_28_S2S_attn sample_temp1.0_k0_p0.0",
+    "stratum": 4,
+    "model": "S2S_attn sample_temp1.0_k0_p0.0",
+    "human_score": 3.5,
+    "geval_score_raw": 0.22163180009996913,
+    "geval_score": 1.8865272003998765,
+    "delta": -1.6134727996001235,
+    "reason": "The Actual Output does not directly address the User's request to check out books. It mentions filling out a registration form and checking a card, which could be related to the checkout process, but it is not clear or directly relevant. The mention of 'free puff and check' is unrelated and confusing, further reducing alignment with the Input."
+  },
+  {
+    "conversation_id": "conv_20_HRED_attn greedy_temp1.0_k0_p0.0",
+    "stratum": 4,
+    "model": "HRED_attn greedy_temp1.0_k0_p0.0",
+    "human_score": 2.5,
+    "geval_score_raw": 0.19861530651666695,
+    "geval_score": 1.7944612260666677,
+    "delta": -0.7055387739333323,
+    "reason": "The Actual Output does not align with the Input as it contradicts the Assistant's previous affirmative response to wanting meat. It fails to address the specific question about preference between beef or lamb, showing a lack of relevance and coherence with the conversation flow."
+  },
+  {
+    "conversation_id": "conv_24_VHRED_attn greedy_temp1.0_k0_p0.0",
+    "stratum": 4,
+    "model": "VHRED_attn greedy_temp1.0_k0_p0.0",
+    "human_score": 3.5,
+    "geval_score_raw": 0.27823749835481093,
+    "geval_score": 2.1129499934192437,
+    "delta": -1.3870500065807563,
+    "reason": "The Actual Output acknowledges the situation but does not directly address the main topic of finding an alternative flight or booking with another airline, as discussed in the Input. It lacks engagement with the specific problem of the long line and the urgency to get to New York."
+  },
+  {
+    "conversation_id": "conv_67_GPT2_medium greedy_temp1.0_k0_p0.0",
+    "stratum": 5,
+    "model": "GPT2_medium greedy_temp1.0_k0_p0.0",
+    "human_score": 1.75,
+    "geval_score_raw": 0.12078787410953411,
+    "geval_score": 1.4831514964381365,
+    "delta": -0.2668485035618635,
+    "reason": "The Actual Output does not address the main topic of waking up for school. It is irrelevant to the Input, which is a prompt to wake up for school, as it instead asks a generic question unrelated to the context."
+  },
+  {
+    "conversation_id": "conv_86_S2S sample_temp1.0_k0_p0.0",
+    "stratum": 5,
+    "model": "S2S sample_temp1.0_k0_p0.0",
+    "human_score": 1,
+    "geval_score_raw": 0.03635972825517906,
+    "geval_score": 1.1454389130207163,
+    "delta": 0.14543891302071632,
+    "reason": "The Actual Output does not address the main topic or question from the Input, which is about identifying a man smoking a cigar. Instead, it introduces an unrelated topic about tasting something, showing no alignment or relevance to the Input."
+  },
+  {
+    "conversation_id": "conv_26_HRED_attn sample_temp1.0_k0_p0.0",
+    "stratum": 5,
+    "model": "HRED_attn sample_temp1.0_k0_p0.0",
+    "human_score": 2,
+    "geval_score_raw": 0.15666228476233252,
+    "geval_score": 1.62664913904933,
+    "delta": -0.37335086095066994,
+    "reason": "The Actual Output does not directly address the main topic of Ron Marston's behavior as described by the User. It introduces a new question that is unrelated to the User's complaint about Ron's frequent phone calls, showing a lack of alignment and relevance to the Input."
+  },
+  {
+    "conversation_id": "conv_18_VHRED_attn sample_temp1.0_k0_p0.0",
+    "stratum": 5,
+    "model": "VHRED_attn sample_temp1.0_k0_p0.0",
+    "human_score": 1.25,
+    "geval_score_raw": 0.062227781455554576,
+    "geval_score": 1.2489111258222183,
+    "delta": -0.0010888741777816957,
+    "reason": "The Actual Output does not address the main topic of the conversation, which is the user's congratulatory remark about the assistant's promotion. Instead, it introduces an unrelated topic about nobody talking to the speaker, showing a lack of alignment and relevance to the Input."
+  }
+]

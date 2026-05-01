@@ -42,7 +42,7 @@ ZENODO_URLS = [
 
 # Size and format constants
 MIN_ZIP_SIZE = 50000  # bytes
-DATASET_SCHEMA_FIELDS = 8
+DATASET_SCHEMA_FIELDS = 9
 SCORE_RANGE_MIN = 1
 SCORE_RANGE_MAX = 5
 
@@ -142,6 +142,14 @@ def parse_annotations(json_path: Path) -> list[dict[str, Any]]:
     Loads the annotations, extracts relevance and appropriateness (content)
     scores for each context-response pair, and creates standardized entries.
 
+    Speaker labels from the raw data (``[speaker, text]`` tuples in ``context``
+    and ``reference``) are preserved so downstream consumers can assign correct
+    conversational roles without guessing by turn-index parity. The
+    ``response_speaker`` field identifies which speaker authored the response,
+    enabling the transformer to mark that speaker's utterances as ``assistant``
+    and the other speaker's utterances as ``user`` regardless of context length
+    or consecutive same-speaker turns.
+
     Args:
         json_path: Path to dd_annotations.json.
 
@@ -149,8 +157,9 @@ def parse_annotations(json_path: Path) -> list[dict[str, Any]]:
         List of dictionaries, one per response, with schema:
         {
             "conversation_id": "conv_{index}_{model}",
-            "turns": ["text1", "text2", ...],
+            "turns": [{"speaker": "A" | "B", "text": "..."}, ...],
             "response": "response text",
+            "response_speaker": "A" | "B",
             "model": "model name",
             "human_relevance_score": float,
             "raw_relevance_scores": [int, ...],
@@ -166,9 +175,19 @@ def parse_annotations(json_path: Path) -> list[dict[str, Any]]:
     dataset = []
 
     for dialogue_idx, (_dialog_id, dialog_data) in enumerate(raw_data.items()):
-        # Extract dialogue context (just the text, in order)
+        # Preserve speaker labels alongside text — discarding them here is what
+        # caused the downstream role-assignment bug that produced consecutive
+        # same-role turns in the DeepEval output.
         context = dialog_data.get("context", [])
-        turns = [text for speaker, text in context]
+        turns = [{"speaker": speaker, "text": text} for speaker, text in context]
+
+        # The reference field identifies the speaker who authored the response.
+        # In DailyDialog-Zhao this is always the speaker opposite to the last
+        # context turn, but we read it from the data rather than inferring.
+        reference = dialog_data.get("reference", ["", ""])
+        response_speaker = (
+            reference[0] if isinstance(reference, list | tuple) and len(reference) > 0 else ""
+        )
 
         # Iterate over responses (models)
         for model_name, model_data in dialog_data.get("responses", {}).items():
@@ -197,6 +216,7 @@ def parse_annotations(json_path: Path) -> list[dict[str, Any]]:
                 "conversation_id": f"conv_{dialogue_idx}_{model_name}",
                 "turns": turns,
                 "response": response_text,
+                "response_speaker": response_speaker,
                 "model": model_name,
                 "human_relevance_score": human_relevance,
                 "raw_relevance_scores": relevance_scores,
@@ -352,8 +372,9 @@ CC BY-NC-SA 4.0 - academic non-commercial use only
 | Field | Type | Description |
 |---|---|---|
 | conversation_id | string | Unique ID: conv_{{index}}_{{model}} |
-| turns | list[str] | Full dialogue context turns in order |
+| turns | list[dict] | Context turns in order, each {{"speaker": str, "text": str}} |
 | response | string | Model-generated response |
+| response_speaker | string | Speaker who authored the response. Values are the raw DailyDialog-Zhao identifiers ("A" or "B") — anonymous interlocutor labels from the source corpus, not gender or persona markers. The `turns[].speaker` field uses the same labels. |
 | model | string | Name of the generative model |
 | human_relevance_score | float | Mean relevance score across annotators (1-5) |
 | raw_relevance_scores | list[int] | Individual annotator relevance scores |
@@ -441,7 +462,7 @@ def main() -> None:
                 len(dataset) == EXPECTED_TOTAL_PAIRS,
             ),
             (
-                "All entries have 8 fields",
+                f"All entries have {DATASET_SCHEMA_FIELDS} fields",
                 all(len(e) == DATASET_SCHEMA_FIELDS for e in dataset),
             ),
             (
