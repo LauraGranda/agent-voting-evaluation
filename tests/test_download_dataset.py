@@ -85,8 +85,11 @@ def make_dataset(
         for model in models:
             entry = {
                 "conversation_id": f"conv_{conv_idx}_{model}",
-                "turns": [f"turn_{i}" for i in range(3)],
+                "turns": [
+                    {"speaker": "A" if i % 2 == 0 else "B", "text": f"turn_{i}"} for i in range(3)
+                ],
                 "response": f"response from {model}",
+                "response_speaker": "B",
                 "model": model,
                 "human_relevance_score": 3.5,
                 "raw_relevance_scores": [3, 4, 3, 4],
@@ -102,8 +105,12 @@ def single_entry() -> dict[str, Any]:
     """One valid processed dataset entry matching the real schema."""
     return {
         "conversation_id": "conv_0_ground-truth",
-        "turns": ["well , how does it look ?", "it 's a perfect fit ."],
+        "turns": [
+            {"speaker": "B", "text": "well , how does it look ?"},
+            {"speaker": "A", "text": "it 's a perfect fit ."},
+        ],
         "response": "cash , credit card , or debit card ?",
+        "response_speaker": "A",
         "model": "ground-truth",
         "human_relevance_score": 4.5,
         "raw_relevance_scores": [5, 5, 3, 5],
@@ -166,7 +173,11 @@ class TestParseAnnotations:
         entry = result[0]
         assert entry["conversation_id"] == "conv_0_test_model"
         assert entry["model"] == "test_model"
-        assert entry["turns"] == ["hello", "world"]
+        assert entry["turns"] == [
+            {"speaker": "A", "text": "hello"},
+            {"speaker": "B", "text": "world"},
+        ]
+        assert entry["response_speaker"] == "A"
         assert entry["response"] == "response for test_model"
         assert len(entry["raw_relevance_scores"]) == NUM_ANNOTATORS
         assert len(entry["raw_appropriateness_scores"]) == NUM_ANNOTATORS
@@ -213,7 +224,12 @@ class TestParseAnnotations:
         assert entry["human_appropriateness_score"] == MEAN_1_2_3_4
 
     def test_parse_turns_extraction(self, tmp_path: Path) -> None:
-        """Turns[] contains only text strings, no speaker labels."""
+        """Turns[] preserves speaker labels alongside text content.
+
+        Speakers are needed downstream to assign conversational roles
+        correctly; discarding them was the root cause of consecutive
+        same-role turns in the DeepEval test cases.
+        """
         context = [["A", "first turn"], ["B", "second turn"], ["A", "third turn"]]
         raw_data = make_raw_dialog_entry(
             "dialog_0",
@@ -226,9 +242,13 @@ class TestParseAnnotations:
         result = parse_annotations(json_file)
         entry = result[0]
 
-        assert entry["turns"] == ["first turn", "second turn", "third turn"]
-        # No speaker labels in turns
-        assert all(speaker not in turn for turn in entry["turns"] for speaker in ["A", "B"])
+        assert entry["turns"] == [
+            {"speaker": "A", "text": "first turn"},
+            {"speaker": "B", "text": "second turn"},
+            {"speaker": "A", "text": "third turn"},
+        ]
+        # response_speaker comes from the 'reference' field of the raw entry
+        assert entry["response_speaker"] == "A"
 
     def test_parse_conversation_id_format(self, tmp_path: Path) -> None:
         """ID follows 'conv_{index}_{model}' pattern."""
