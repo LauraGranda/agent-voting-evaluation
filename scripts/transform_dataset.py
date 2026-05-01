@@ -32,22 +32,41 @@ def load_dataset(path: Path) -> list[dict[str, Any]]:
         return cast(list[dict[str, Any]], json.load(f))
 
 
-def build_turns(turns: list[str]) -> list[Turn]:
-    """Convert list of text strings to DeepEval Turn objects.
+def build_turns(
+    turns: list[dict[str, str]],
+    response_speaker: str,
+) -> list[Turn]:
+    """Convert speaker-labeled turns to DeepEval Turn objects.
 
-    Alternates between user and assistant roles starting with user.
-    Preserves all turns including the last one as conversation history.
+    Roles are derived from the actual speaker labels preserved in the raw
+    data, not from turn-index parity. The speaker who authored the response
+    (``response_speaker``) is mapped to ``assistant``; every other speaker is
+    mapped to ``user``. This correctly handles:
+
+    - odd or even context lengths (prior parity-based logic produced
+      consecutive same-role turns when context length + response parity
+      collided),
+    - legitimate consecutive same-speaker utterances (both get the same role,
+      which is the semantically correct outcome),
+    - newlines or arbitrary whitespace inside utterance text (content is
+      passed through untouched).
 
     Args:
-        turns: List of turn text strings.
+        turns: Context turns, each a dict with keys ``speaker`` and ``text``.
+        response_speaker: Speaker label of the turn being evaluated (the one
+            whose final utterance becomes ``actual_output``). Must match the
+            ``speaker`` value of the response-side speaker in ``turns``.
 
     Returns:
-        List of Turn objects with alternating roles.
+        List of Turn objects whose roles reflect the underlying speaker of
+        each utterance.
     """
     result = []
-    for i, text in enumerate(turns):
-        role: Literal["user", "assistant"] = "user" if i % 2 == 0 else "assistant"
-        result.append(Turn(role=role, content=text))
+    for turn in turns:
+        role: Literal["user", "assistant"] = (
+            "assistant" if turn["speaker"] == response_speaker else "user"
+        )
+        result.append(Turn(role=role, content=turn["text"]))
     return result
 
 
@@ -57,15 +76,18 @@ def entry_to_test_case(entry: dict[str, Any]) -> ConversationalTestCase:
     Preserves human scores and metadata for downstream correlation analysis.
 
     Args:
-        entry: Dataset entry with keys: conversation_id, turns, response, model,
-            human_relevance_score, raw_relevance_scores,
-            human_appropriateness_score, raw_appropriateness_scores.
+        entry: Dataset entry with keys: conversation_id, turns, response,
+            response_speaker, model, human_relevance_score,
+            raw_relevance_scores, human_appropriateness_score,
+            raw_appropriateness_scores.
 
     Returns:
         ConversationalTestCase with turns and metadata.
     """
-    # Build turns from context and add final response as assistant turn
-    turns = build_turns(entry["turns"])
+    # Build turns from speaker-labeled context, then append the response
+    # as an assistant turn (the model's output under evaluation).
+    response_speaker = entry["response_speaker"]
+    turns = build_turns(entry["turns"], response_speaker)
     turns.append(Turn(role="assistant", content=entry["response"]))
 
     # Metadata for correlation and score preservation
@@ -76,6 +98,7 @@ def entry_to_test_case(entry: dict[str, Any]) -> ConversationalTestCase:
         "raw_appropriateness_scores": entry["raw_appropriateness_scores"],
         "conversation_id": entry["conversation_id"],
         "model": entry["model"],
+        "response_speaker": response_speaker,
     }
 
     return ConversationalTestCase(turns=turns, additional_metadata=metadata)

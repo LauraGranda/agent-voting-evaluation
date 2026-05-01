@@ -32,11 +32,12 @@ def single_raw_entry() -> dict[str, Any]:
     return {
         "conversation_id": "conv_0_ground-truth",
         "turns": [
-            "well , how does it look ?",
-            "it 's a perfect fit .",
-            "let me pay for it now .",
+            {"speaker": "B", "text": "well , how does it look ?"},
+            {"speaker": "A", "text": "it 's a perfect fit ."},
+            {"speaker": "B", "text": "let me pay for it now ."},
         ],
         "response": "cash , credit card , or debit card ?",
+        "response_speaker": "A",
         "model": "ground-truth",
         "human_relevance_score": 4.5,
         "raw_relevance_scores": [5, 5, 3, 5],
@@ -51,11 +52,12 @@ def negative_sample_entry() -> dict[str, Any]:
     return {
         "conversation_id": "conv_0_negative-sample",
         "turns": [
-            "well , how does it look ?",
-            "it 's a perfect fit .",
-            "let me pay for it now .",
+            {"speaker": "B", "text": "well , how does it look ?"},
+            {"speaker": "A", "text": "it 's a perfect fit ."},
+            {"speaker": "B", "text": "let me pay for it now ."},
         ],
         "response": "we have binders with local job listings or you can make use of the computers . ok ?",
+        "response_speaker": "A",
         "model": "negative-sample",
         "human_relevance_score": 2.25,
         "raw_relevance_scores": [1, 4, 2, 2],
@@ -70,11 +72,12 @@ def low_relevance_entry() -> dict[str, Any]:
     return {
         "conversation_id": "conv_0_GPT2_small top_temp1.0_k0_p0.9",
         "turns": [
-            "well , how does it look ?",
-            "it 's a perfect fit .",
-            "let me pay for it now .",
+            {"speaker": "B", "text": "well , how does it look ?"},
+            {"speaker": "A", "text": "it 's a perfect fit ."},
+            {"speaker": "B", "text": "let me pay for it now ."},
         ],
         "response": "i 'm so sorry . i forgot to fill out the form .",
+        "response_speaker": "A",
         "model": "GPT2_small top_temp1.0_k0_p0.9",
         "human_relevance_score": 1.5,
         "raw_relevance_scores": [1, 1, 1, 3],
@@ -89,32 +92,45 @@ def low_relevance_entry() -> dict[str, Any]:
 
 
 def test_turns_count_matches_input() -> None:
-    """3 input strings → 3 Turn objects."""
-    turns_text = ["turn 1", "turn 2", "turn 3"]
-    result = build_turns(turns_text)
+    """3 input turns → 3 Turn objects."""
+    turns_input = [
+        {"speaker": "A", "text": "turn 1"},
+        {"speaker": "B", "text": "turn 2"},
+        {"speaker": "A", "text": "turn 3"},
+    ]
+    result = build_turns(turns_input, response_speaker="B")
     assert len(result) == EXPECTED_TURN_COUNT
 
 
-def test_turns_alternating_roles() -> None:
-    """Roles must alternate user/assistant/user starting with user."""
-    turns_text = ["turn 1", "turn 2", "turn 3"]
-    result = build_turns(turns_text)
-    assert result[0].role == "user"
-    assert result[1].role == "assistant"
-    assert result[2].role == "user"
+def test_turns_roles_driven_by_speaker() -> None:
+    """Role = 'assistant' iff speaker matches response_speaker, else 'user'."""
+    turns_input = [
+        {"speaker": "A", "text": "turn 1"},
+        {"speaker": "B", "text": "turn 2"},
+        {"speaker": "A", "text": "turn 3"},
+    ]
+    result = build_turns(turns_input, response_speaker="B")
+    assert result[0].role == "user"  # A != B
+    assert result[1].role == "assistant"  # B == B
+    assert result[2].role == "user"  # A != B
 
 
 def test_turns_content_preserved() -> None:
-    """Text content must match input strings exactly, no modification."""
-    turns_text = ["turn 1", "turn 2", "turn 3"]
-    result = build_turns(turns_text)
-    for i, text in enumerate(turns_text):
-        assert result[i].content == text
+    """Text content must match input exactly, including embedded newlines."""
+    turns_input = [
+        {"speaker": "A", "text": "turn 1"},
+        {"speaker": "B", "text": "turn\n2"},
+        {"speaker": "A", "text": "turn 3"},
+    ]
+    result = build_turns(turns_input, response_speaker="A")
+    assert result[0].content == "turn 1"
+    assert result[1].content == "turn\n2"
+    assert result[2].content == "turn 3"
 
 
 def test_turns_single_turn() -> None:
-    """1 input string → 1 Turn with role=user."""
-    result = build_turns(["single turn"])
+    """1 input turn with speaker=A, response_speaker=B → 1 Turn with role=user."""
+    result = build_turns([{"speaker": "A", "text": "single turn"}], response_speaker="B")
     assert len(result) == 1
     assert result[0].role == "user"
     assert result[0].content == "single turn"
@@ -122,8 +138,33 @@ def test_turns_single_turn() -> None:
 
 def test_turns_empty_list() -> None:
     """Empty list → empty list, no crash."""
-    result = build_turns([])
+    result = build_turns([], response_speaker="A")
     assert result == []
+
+
+def test_turns_consecutive_same_speaker_preserved() -> None:
+    """Two consecutive utterances by the same speaker map to the same role.
+
+    Defensive: DailyDialog-Zhao has strict A/B alternation, but the function
+    must not silently reshuffle roles when given non-alternating input.
+    """
+    turns_input = [
+        {"speaker": "A", "text": "turn 1"},
+        {"speaker": "A", "text": "turn 2"},
+        {"speaker": "B", "text": "turn 3"},
+    ]
+    result = build_turns(turns_input, response_speaker="B")
+    assert [t.role for t in result] == ["user", "user", "assistant"]
+
+
+def test_turns_response_speaker_user_still_possible() -> None:
+    """If response_speaker doesn't match any context speaker, all turns are user."""
+    turns_input = [
+        {"speaker": "A", "text": "turn 1"},
+        {"speaker": "B", "text": "turn 2"},
+    ]
+    result = build_turns(turns_input, response_speaker="C")
+    assert [t.role for t in result] == ["user", "user"]
 
 
 # ============================================================================
@@ -181,8 +222,8 @@ def test_input_is_last_turn(single_raw_entry: dict[str, Any]) -> None:
     """Input field should match the last user turn from original entry."""
     result = entry_to_test_case(single_raw_entry)
     serialized = serialize_test_case(result)
-    # Last turn in original context should be the input prompt
-    assert serialized["input"] == single_raw_entry["turns"][-1]
+    # Last user turn = last context turn authored by the non-response speaker
+    assert serialized["input"] == single_raw_entry["turns"][-1]["text"]
 
 
 def test_actual_output_is_response(single_raw_entry: dict[str, Any]) -> None:
@@ -225,6 +266,7 @@ def test_serialized_metadata_has_required_keys(
         "raw_appropriateness_scores",
         "conversation_id",
         "model",
+        "response_speaker",
     }
     assert set(serialized["metadata"].keys()) == required_metadata_keys
 
@@ -329,5 +371,5 @@ def test_integration_full_pipeline(single_raw_entry: dict[str, Any]) -> None:
     serialized = [serialize_test_case(test_case)]
     validate_transform(original, serialized)
     # Verify output structure
-    assert serialized[0]["input"] == single_raw_entry["turns"][-1]
+    assert serialized[0]["input"] == single_raw_entry["turns"][-1]["text"]
     assert serialized[0]["actual_output"] == single_raw_entry["response"]
