@@ -36,7 +36,8 @@
         3
       ],
       "conversation_id": "conv_97_ground-truth",
-      "model": "ground-truth"
+      "model": "ground-truth",
+      "response_speaker": "A"
     },
     "stratum": 1
   },
@@ -77,7 +78,8 @@
         4
       ],
       "conversation_id": "conv_94_ground-truth",
-      "model": "ground-truth"
+      "model": "ground-truth",
+      "response_speaker": "A"
     },
     "stratum": 1
   },
@@ -110,28 +112,29 @@
         5
       ],
       "conversation_id": "conv_91_ground-truth",
-      "model": "ground-truth"
+      "model": "ground-truth",
+      "response_speaker": "A"
     },
     "stratum": 1
   },
   {
-    "input": "the wine choices are posted on the little menu in the middle of the table .",
+    "input": "do you have any mixed drinks available here ?",
     "actual_output": "we can make a number of mixed drinks at our bar .",
     "turns": [
       {
-        "role": "user",
+        "role": "assistant",
         "content": "can i take your drink order ?"
       },
       {
-        "role": "assistant",
+        "role": "user",
         "content": "where is your wine list ?"
       },
       {
-        "role": "user",
+        "role": "assistant",
         "content": "the wine choices are posted on the little menu in the middle of the table ."
       },
       {
-        "role": "assistant",
+        "role": "user",
         "content": "do you have any mixed drinks available here ?"
       },
       {
@@ -155,7 +158,8 @@
         5
       ],
       "conversation_id": "conv_8_ground-truth",
-      "model": "ground-truth"
+      "model": "ground-truth",
+      "response_speaker": "B"
     },
     "stratum": 1
   },
@@ -196,7 +200,8 @@
         2
       ],
       "conversation_id": "conv_1_negative-sample",
-      "model": "negative-sample"
+      "model": "negative-sample",
+      "response_speaker": "A"
     },
     "stratum": 2
   },
@@ -245,20 +250,21 @@
         1
       ],
       "conversation_id": "conv_22_negative-sample",
-      "model": "negative-sample"
+      "model": "negative-sample",
+      "response_speaker": "A"
     },
     "stratum": 2
   },
   {
-    "input": "may i help you ?",
+    "input": "i would like to check out these books .",
     "actual_output": "yes . you must fill up the car yourself .",
     "turns": [
       {
-        "role": "user",
+        "role": "assistant",
         "content": "may i help you ?"
       },
       {
-        "role": "assistant",
+        "role": "user",
         "content": "i would like to check out these books ."
       },
       {
@@ -282,7 +288,8 @@
         1
       ],
       "conversation_id": "conv_28_negative-sample",
-      "model": "negative-sample"
+      "model": "negative-sample",
+      "response_speaker": "B"
     },
     "stratum": 2
   },
@@ -331,7 +338,8 @@
         2
       ],
       "conversation_id": "conv_36_negative-sample",
-      "model": "negative-sample"
+      "model": "negative-sample",
+      "response_speaker": "A"
     },
     "stratum": 2
   },
@@ -372,7 +380,8 @@
         3
       ],
       "conversation_id": "conv_30_GPT2_small top_temp1.0_k0_p0.9",
-      "model": "GPT2_small top_temp1.0_k0_p0.9"
+      "model": "GPT2_small top_temp1.0_k0_p0.9",
+      "response_speaker": "A"
     },
     "stratum": 3
   },
@@ -421,7 +430,8 @@
         3
       ],
       "conversation_id": "conv_14_S2S_attn greedy_temp1.0_k0_p0.0",
-      "model": "S2S_attn greedy_temp1.0_k0_p0.0"
+      "model": "S2S_attn greedy_temp1.0_k0_p0.0",
+      "response_speaker": "A"
     },
     "stratum": 3
   },
@@ -462,7 +472,8 @@
         3
       ],
       "conversation_id": "conv_41_HRED_attn greedy_temp1.0_k0_p0.0",
-      "model": "HRED_attn greedy_temp1.0_k0_p0.0"
+      "model": "HRED_attn greedy_temp1.0_k0_p0.0",
+      "response_speaker": "A"
     },
     "stratum": 3
   },
@@ -503,7 +514,8 @@
         1
       ],
       "conversation_id": "conv_51_VHRED_attn sample_temp1.0_k0_p0.0",
-      "model": "VHRED_attn sample_temp1.0_k0_p0.0"
+      "model": "VHRED_attn sample_temp1.0_k0_p0.0",
+      "response_speaker": "A"
     },
     "stratum": 3
   },
@@ -552,20 +564,21 @@
         2
       ],
       "conversation_id": "conv_31_GPT2_medium top_temp1.0_k0_p0.5",
-      "model": "GPT2_medium top_temp1.0_k0_p0.5"
+      "model": "GPT2_medium top_temp1.0_k0_p0.5",
+      "response_speaker": "B"
     },
     "stratum": 4
   },
   {
-    "input": "may i help you ?",
+    "input": "i would like to check out these books .",
     "actual_output": "please fill out the registration form first . and checking the card , free puff and check .",
     "turns": [
       {
-        "role": "user",
+        "role": "assistant",
         "content": "may i help you ?"
       },
       {
-        "role": "assistant",
+        "role": "user",
         "content": "i would like to check out these books ."
       },
       {
@@ -589,7 +602,8 @@
         4
       ],
       "conversation_id": "conv_28_S2S_attn sample_temp1.0_k0_p0.0",
-      "model": "S2S_attn sample_temp1.0_k0_p0.0"
+      "model": "S2S_attn sample_temp1.0_k0_p0.0",
+      "response_speaker": "B"
     },
     "stratum": 4
   },
@@ -630,7 +644,8 @@
         2
       ],
       "conversation_id": "conv_20_HRED_attn greedy_temp1.0_k0_p0.0",
-      "model": "HRED_attn greedy_temp1.0_k0_p0.0"
+      "model": "HRED_attn greedy_temp1.0_k0_p0.0",
+      "response_speaker": "A"
     },
     "stratum": 4
   },
@@ -679,7 +694,8 @@
         2
       ],
       "conversation_id": "conv_24_VHRED_attn greedy_temp1.0_k0_p0.0",
-      "model": "VHRED_attn greedy_temp1.0_k0_p0.0"
+      "model": "VHRED_attn greedy_temp1.0_k0_p0.0",
+      "response_speaker": "B"
     },
     "stratum": 4
   },
@@ -712,7 +728,8 @@
         2
       ],
       "conversation_id": "conv_67_GPT2_medium greedy_temp1.0_k0_p0.0",
-      "model": "GPT2_medium greedy_temp1.0_k0_p0.0"
+      "model": "GPT2_medium greedy_temp1.0_k0_p0.0",
+      "response_speaker": "A"
     },
     "stratum": 5
   },
@@ -753,20 +770,21 @@
         1
       ],
       "conversation_id": "conv_86_S2S sample_temp1.0_k0_p0.0",
-      "model": "S2S sample_temp1.0_k0_p0.0"
+      "model": "S2S sample_temp1.0_k0_p0.0",
+      "response_speaker": "A"
     },
     "stratum": 5
   },
   {
-    "input": "what 's ron marston like , pauline ?",
+    "input": "he 's awful ! he telephoned me four times yesterday , and three times the day before yesterday . he telephoned the office yesterday morning and yesterday afternoon . my boss answered the telephone .",
     "actual_output": "does he get the message for the message ?",
     "turns": [
       {
-        "role": "user",
+        "role": "assistant",
         "content": "what 's ron marston like , pauline ?"
       },
       {
-        "role": "assistant",
+        "role": "user",
         "content": "he 's awful ! he telephoned me four times yesterday , and three times the day before yesterday . he telephoned the office yesterday morning and yesterday afternoon . my boss answered the telephone ."
       },
       {
@@ -790,7 +808,8 @@
         1
       ],
       "conversation_id": "conv_26_HRED_attn sample_temp1.0_k0_p0.0",
-      "model": "HRED_attn sample_temp1.0_k0_p0.0"
+      "model": "HRED_attn sample_temp1.0_k0_p0.0",
+      "response_speaker": "B"
     },
     "stratum": 5
   },
@@ -831,7 +850,8 @@
         2
       ],
       "conversation_id": "conv_18_VHRED_attn sample_temp1.0_k0_p0.0",
-      "model": "VHRED_attn sample_temp1.0_k0_p0.0"
+      "model": "VHRED_attn sample_temp1.0_k0_p0.0",
+      "response_speaker": "A"
     },
     "stratum": 5
   }

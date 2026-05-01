@@ -4,79 +4,79 @@
     "stratum": 1,
     "model": "ground-truth",
     "human_score": 5,
-    "geval_score_raw": 0.5528605948899543,
-    "geval_score": 3.2114423795598173,
-    "delta": -1.7885576204401827,
-    "reason": "The Actual Output partially addresses the user's intent, which is to share good news, by suggesting a lottery win. However, it does not directly respond to the invitation to join for coffee. The output is topically consistent with the conversation's focus on good news and the user's happiness, but it misses the social aspect of the invitation."
+    "geval_score_raw": 0.5500220075706154,
+    "geval_score": 3.2000880302824615,
+    "delta": -1.7999119697175385,
+    "reason": "The Actual Output partially addresses the user's intent, which is to share good news, by suggesting a possible reason for the user's happiness. However, it does not directly respond to the invitation to join for coffee. The output is topically consistent with the conversation's focus on the user's good news and happiness, but it misses the opportunity to engage with the invitation aspect."
   },
   {
     "conversation_id": "conv_94_ground-truth",
     "stratum": 1,
     "model": "ground-truth",
     "human_score": 5,
-    "geval_score_raw": 0.8200615898118679,
-    "geval_score": 4.280246359247472,
-    "delta": -0.7197536407525282,
-    "reason": "The Actual Output addresses the user's implicit request for assistance with the roof leak by asking for more details, which aligns with the intent to report a problem. It is topically consistent with the conversation about the rainstorm and the roof leak. However, it could be more directly helpful by acknowledging the issue before asking for more information."
+    "geval_score_raw": 0.8305667367722982,
+    "geval_score": 4.322266947089193,
+    "delta": -0.6777330529108072,
+    "reason": "The Actual Output addresses the user's implicit request for assistance with the roof leak by asking for more details, which aligns with the communicative intent of seeking help. It is topically consistent with the conversation about the roof leak caused by the rainstorm. However, it could be more directly aligned by acknowledging the issue before asking for details."
   },
   {
     "conversation_id": "conv_91_ground-truth",
     "stratum": 1,
     "model": "ground-truth",
     "human_score": 5,
-    "geval_score_raw": 0.5685307747831423,
-    "geval_score": 3.274123099132569,
-    "delta": -1.7258769008674308,
-    "reason": "The communicative intent of the user turn is a question about the approval of a meal. The key topic is the meal and its approval. The Actual Output directly addresses the intent by confirming the meal was perfect, showing strong alignment. However, it slightly shifts the perspective from 'your' to 'our', which may cause minor confusion, but overall remains topically consistent."
+    "geval_score_raw": 0.610702912892265,
+    "geval_score": 3.44281165156906,
+    "delta": -1.5571883484309401,
+    "reason": "The communicative intent of the user turn is a question about the approval of the meal. The key topic is the meal and its quality. The Actual Output directly addresses the intent by affirming the meal was perfect, which aligns with the user's inquiry. However, the response could be slightly more explicit in confirming approval, hence a slight deduction."
   },
   {
     "conversation_id": "conv_8_ground-truth",
     "stratum": 1,
     "model": "ground-truth",
     "human_score": 5,
-    "geval_score_raw": 0.8684080500721972,
-    "geval_score": 4.4736322002887885,
-    "delta": -0.5263677997112115,
-    "reason": "The Actual Output directly addresses the intent of the final user turn, which is a question about the availability of mixed drinks. The response confirms the availability of mixed drinks, aligning well with the communicative intent. The topics of drink orders and mixed drinks are consistent throughout the conversation, ensuring topical consistency."
+    "geval_score_raw": 0.9244802013649908,
+    "geval_score": 4.6979208054599635,
+    "delta": -0.3020791945400365,
+    "reason": "The Actual Output directly addresses the user's intent in the final turn, which is to inquire about the availability of mixed drinks. The response confirms that mixed drinks can be made at the bar, aligning well with the user's request. The output is also topically consistent with the conversation history, which revolves around drink options available at the establishment."
   },
   {
     "conversation_id": "conv_1_negative-sample",
     "stratum": 2,
     "model": "negative-sample",
     "human_score": 1,
-    "geval_score_raw": 0.09311170807277244,
-    "geval_score": 1.3724468322910899,
-    "delta": 0.3724468322910899,
-    "reason": "The communicative intent of the final user turn is a statement about the unavailability of appointments. The key topics are appointments and scheduling. The Actual Output does not address the intent of informing about the lack of available appointments and is not topically consistent, as it introduces an unrelated topic about sensitivity."
+    "geval_score_raw": 0.12039113805163218,
+    "geval_score": 1.4815645522065286,
+    "delta": 0.4815645522065286,
+    "reason": "The communicative intent of the final user turn is a statement indicating no available appointments. The key topics are appointments and scheduling. The Actual Output does not address the intent of informing about the lack of appointments and is not topically consistent, as it introduces an unrelated topic about sensitivity."
   },
   {
     "conversation_id": "conv_22_negative-sample",
     "stratum": 2,
     "model": "negative-sample",
     "human_score": 1,
-    "geval_score_raw": 0.017099184408369918,
-    "geval_score": 1.0683967376334798,
-    "delta": 0.06839673763347975,
-    "reason": "The Actual Output 'even silverware?' does not address the user's intent of confirming their decision to get a short haircut, nor is it topically consistent with the conversation about haircuts. The response is unrelated to the key topics and entities discussed in the conversation."
+    "geval_score_raw": 0.002887090574514316,
+    "geval_score": 1.0115483622980572,
+    "delta": 0.011548362298057224,
+    "reason": "The Actual Output does not address the user's intent, which is to confirm their decision about a short haircut. It is also not topically consistent with the conversation about haircuts, as it introduces an unrelated topic about silverware."
   },
   {
     "conversation_id": "conv_28_negative-sample",
     "stratum": 2,
     "model": "negative-sample",
     "human_score": 1,
-    "geval_score_raw": 0.026143385472984053,
-    "geval_score": 1.1045735418919362,
-    "delta": 0.10457354189193624,
-    "reason": "The Actual Output does not address the intent of the user's question in Turn 1, which is an offer of help. The response about filling up a car is unrelated to the key topic of checking out books, making it topically inconsistent with the conversation history."
+    "geval_score_raw": 0.005665241933526149,
+    "geval_score": 1.0226609677341045,
+    "delta": 0.02266096773410453,
+    "reason": "The Actual Output does not address the user's intent to check out books, nor is it topically consistent with the conversation about books. It introduces an unrelated topic about filling up a car, which is not present in the conversation history."
   },
   {
     "conversation_id": "conv_36_negative-sample",
     "stratum": 2,
     "model": "negative-sample",
     "human_score": 1,
-    "geval_score_raw": 0.015002883194322006,
-    "geval_score": 1.060011532777288,
-    "delta": 0.0600115327772881,
+    "geval_score_raw": 0.017860654238322428,
+    "geval_score": 1.0714426169532898,
+    "delta": 0.0714426169532898,
     "reason": "The Actual Output does not address the intent of the final user turn, which is to offer an appointment at five thirty. It is also not topically consistent with the conversation, which revolves around scheduling a doctor's appointment due to a medical concern. The output introduces an unrelated topic about chocolate, failing to align with the conversation's context and intent."
   },
   {
@@ -84,119 +84,119 @@
     "stratum": 3,
     "model": "GPT2_small top_temp1.0_k0_p0.9",
     "human_score": 4.75,
-    "geval_score_raw": 0.20240210507017564,
-    "geval_score": 1.8096084202807026,
-    "delta": -2.9403915797192974,
-    "reason": "The Actual Output repeats the question from Turn 2 without addressing the user's intent to discuss their cable service issue. It fails to acknowledge the key topic of the cable not working for the past week, thus not directly addressing the user's problem."
+    "geval_score_raw": 0.2220647624087054,
+    "geval_score": 1.8882590496348217,
+    "delta": -2.8617409503651783,
+    "reason": "The Actual Output does not address the user's intent from the final turn, which is to report a non-working cable service. It repeats a question already asked by the Assistant in Turn 2, failing to advance the conversation. The output is topically consistent with the conversation about cable service issues but does not address the specific problem mentioned by the user."
   },
   {
     "conversation_id": "conv_14_S2S_attn greedy_temp1.0_k0_p0.0",
     "stratum": 3,
     "model": "S2S_attn greedy_temp1.0_k0_p0.0",
     "human_score": 4.75,
-    "geval_score_raw": 0.6590009646773692,
-    "geval_score": 3.636003858709477,
-    "delta": -1.113996141290523,
-    "reason": "The Actual Output addresses the intent of expressing gratitude from the final user turn, which is a statement of appreciation. The response 'you are welcome' is a direct acknowledgment of this intent. However, the response lacks further engagement or elaboration on the key topics of the conversation, such as the promotion and excitement, which could enhance topical consistency."
+    "geval_score_raw": 0.6992881988736718,
+    "geval_score": 3.797152795494687,
+    "delta": -0.9528472045053129,
+    "reason": "The Actual Output addresses the intent of the final user turn, which is a statement of appreciation, by responding with 'you are welcome,' indicating acknowledgment. The response is topically consistent with the conversation about the user's promotion and excitement, maintaining the polite and supportive tone established in the dialogue."
   },
   {
     "conversation_id": "conv_41_HRED_attn greedy_temp1.0_k0_p0.0",
     "stratum": 3,
     "model": "HRED_attn greedy_temp1.0_k0_p0.0",
     "human_score": 4,
-    "geval_score_raw": 0.6420818992710962,
-    "geval_score": 3.5683275970843846,
-    "delta": -0.43167240291561537,
-    "reason": "The Actual Output addresses the user's intent to schedule a meeting by confirming a time, which partially aligns with the user's request to meet on Monday. However, it lacks confirmation of the specific date, which is a key detail. The response is topically consistent with the conversation about scheduling a meeting."
+    "geval_score_raw": 0.6665080263531321,
+    "geval_score": 3.6660321054125284,
+    "delta": -0.33396789458747156,
+    "reason": "The communicative intent in the final user turn is a request to schedule a meeting on Monday. The key topics are scheduling and meeting times. The Actual Output partially addresses the intent by confirming a time, but it does not confirm the day, which is a key detail. The response is topically consistent with the conversation history, focusing on scheduling the meeting."
   },
   {
     "conversation_id": "conv_51_VHRED_attn sample_temp1.0_k0_p0.0",
     "stratum": 3,
     "model": "VHRED_attn sample_temp1.0_k0_p0.0",
     "human_score": 4,
-    "geval_score_raw": 0.20319614364224767,
-    "geval_score": 1.8127845745689908,
-    "delta": -2.187215425431009,
-    "reason": "The communicative intent of the final user turn is to report a specific issue (cockroaches in the room). The key topics and entities are the room number (507) and the presence of cockroaches. The Actual Output does not directly address the user's intent to report the issue or offer assistance. It is only partially topically consistent, as it vaguely prompts for more information without acknowledging the specific problem mentioned."
+    "geval_score_raw": 0.1968390286858112,
+    "geval_score": 1.7873561147432449,
+    "delta": -2.212643885256755,
+    "reason": "The communicative intent of the final user turn is a statement about finding cockroaches in the room, indicating a complaint or request for assistance. The key topics and entities are the user's room (507) and the presence of cockroaches. The Actual Output does not directly address the user's complaint or request for assistance, as it vaguely asks for more information without acknowledging the specific issue. It is partially topically consistent, as it seeks more details, but fails to address the urgency or nature of the problem."
   },
   {
     "conversation_id": "conv_31_GPT2_medium top_temp1.0_k0_p0.5",
     "stratum": 4,
     "model": "GPT2_medium top_temp1.0_k0_p0.5",
     "human_score": 3.25,
-    "geval_score_raw": 0.37211675026657254,
-    "geval_score": 2.48846700106629,
-    "delta": -0.7615329989337098,
-    "reason": "The communicative intent in the final user turn is to inform the assistant about an alternative option. The key topics include ethernet connectivity issues and alternative solutions. The Actual Output acknowledges the alternative but lacks specificity and does not directly address the invitation to use the computer lab. It is topically consistent but only partially addresses the intent."
+    "geval_score_raw": 0.4469009233721229,
+    "geval_score": 2.7876036934884914,
+    "delta": -0.46239630651150865,
+    "reason": "The Actual Output acknowledges the user's mention of the computer lab, indicating a partial address of the user's intent to offer alternatives. However, it lacks specificity and does not fully engage with the user's offer to provide more information about alternatives, which was the main intent of the user's final turn. The response is topically consistent with the mention of the computer lab but does not expand on the alternatives as requested."
   },
   {
     "conversation_id": "conv_28_S2S_attn sample_temp1.0_k0_p0.0",
     "stratum": 4,
     "model": "S2S_attn sample_temp1.0_k0_p0.0",
     "human_score": 3.5,
-    "geval_score_raw": 0.2386124812274797,
-    "geval_score": 1.9544499249099188,
-    "delta": -1.5455500750900812,
-    "reason": "The communicative intent in the final user turn is a question offering help. The key topics are assistance and checking out books. The Actual Output does not directly address the offer of help and is only partially relevant to the topic of checking out books, as it mentions a registration form and card checking, which could be related to the process. However, it introduces unrelated elements like 'free puff and check,' which are not consistent with the conversation topics."
+    "geval_score_raw": 0.2627880658407683,
+    "geval_score": 2.051152263363073,
+    "delta": -1.4488477366369268,
+    "reason": "The communicative intent in the final user turn is a request to check out books. The key topic is book checkout. The Actual Output partially addresses the intent by mentioning a registration form, which could be related to the checkout process, but it is unclear and lacks direct relevance to checking out books. The mention of 'checking the card' and 'free puff' is not topically consistent with the user's request, leading to a partial alignment with the user's intent and topics."
   },
   {
     "conversation_id": "conv_20_HRED_attn greedy_temp1.0_k0_p0.0",
     "stratum": 4,
     "model": "HRED_attn greedy_temp1.0_k0_p0.0",
     "human_score": 2.5,
-    "geval_score_raw": 0.21969863333562029,
-    "geval_score": 1.8787945333424811,
-    "delta": -0.6212054666575189,
-    "reason": "The communicative intent of the final user turn is a question about preference between beef or lamb. The key topics are meat preference and specific types of meat (beef or lamb). The Actual Output does not directly address the question about preference between beef or lamb, instead providing a contradictory response to the previous affirmative. It is not topically consistent with the specific entities mentioned in the conversation, leading to a low score."
+    "geval_score_raw": 0.22492418465712166,
+    "geval_score": 1.8996967386284866,
+    "delta": -0.6003032613715134,
+    "reason": "The communicative intent in the final user turn is a question about preference between beef or lamb. The key topics are meat preference and specific types of meat (beef, lamb). The Actual Output does not directly address the question about beef or lamb, instead providing a general negative response. While it is topically related to the discussion of meat, it fails to address the specific choice presented, resulting in a low score."
   },
   {
     "conversation_id": "conv_24_VHRED_attn greedy_temp1.0_k0_p0.0",
     "stratum": 4,
     "model": "VHRED_attn greedy_temp1.0_k0_p0.0",
     "human_score": 3.5,
-    "geval_score_raw": 0.3691120593203026,
-    "geval_score": 2.47644823728121,
-    "delta": -1.0235517627187898,
-    "reason": "The communicative intent of the final user turn is a statement acknowledging the long line and the demand for flights to New York. The key topics include flight cancellations, booking alternatives, and the long line for other airlines. The Actual Output partially addresses the intent by implying acceptance of the situation but does not directly respond to the user's statement about the line or the demand for flights. It is topically consistent with the conversation but lacks direct engagement with the user's final statement."
+    "geval_score_raw": 0.3539255238925844,
+    "geval_score": 2.415702095570338,
+    "delta": -1.0842979044296621,
+    "reason": "The communicative intent in the final user turn is a statement about the long line for booking another airline. The key topics include flight cancellation, booking another flight, and the long line. The Actual Output partially addresses the intent by accepting the situation but does not directly respond to the statement about the line or provide a solution. It is topically consistent with the conversation but lacks engagement with the specific issue of the long line."
   },
   {
     "conversation_id": "conv_67_GPT2_medium greedy_temp1.0_k0_p0.0",
     "stratum": 5,
     "model": "GPT2_medium greedy_temp1.0_k0_p0.0",
     "human_score": 1.75,
-    "geval_score_raw": 0.15823953049514278,
-    "geval_score": 1.632958121980571,
-    "delta": -0.11704187801942889,
-    "reason": "The communicative intent of the user turn is a statement to wake up for school. The key topic is waking up for school. The Actual Output does not address the intent directly or partially, as it responds with a generic question 'what's up?' which is not relevant to the user's statement. The response is not topically consistent with the entities and topics from the input."
+    "geval_score_raw": 0.1464863957668214,
+    "geval_score": 1.5859455830672857,
+    "delta": -0.16405441693271428,
+    "reason": "The communicative intent of the user turn is a statement to wake up for school. The key topic is waking up for school. The Actual Output does not address the intent of waking up or school, and it is not topically consistent with the input, as it introduces an unrelated question."
   },
   {
     "conversation_id": "conv_86_S2S sample_temp1.0_k0_p0.0",
     "stratum": 5,
     "model": "S2S sample_temp1.0_k0_p0.0",
     "human_score": 1,
-    "geval_score_raw": 0.019414896946823457,
-    "geval_score": 1.0776595877872939,
-    "delta": 0.07765958778729387,
-    "reason": "The Actual Output does not address the user's intent, which is to identify the man smoking a cigar. It is also not topically consistent with the conversation, which is focused on identifying a person, not tasting something."
+    "geval_score_raw": 0.029974507660145876,
+    "geval_score": 1.1198980306405835,
+    "delta": 0.11989803064058346,
+    "reason": "The Actual Output does not address the user's intent, which is to identify the man smoking a cigar. It is also not topically consistent with the conversation, which is about identifying a person, not tasting something."
   },
   {
     "conversation_id": "conv_26_HRED_attn sample_temp1.0_k0_p0.0",
     "stratum": 5,
     "model": "HRED_attn sample_temp1.0_k0_p0.0",
     "human_score": 2,
-    "geval_score_raw": 0.1364194047629021,
-    "geval_score": 1.5456776190516084,
-    "delta": -0.4543223809483916,
-    "reason": "The communicative intent of the final user turn is a question about Ron Marston's behavior. The key topics are Ron Marston's frequent phone calls and Pauline's negative opinion. The Actual Output does not address the intent of the question and is not topically consistent, as it introduces an unrelated and unclear question about a 'message.'"
+    "geval_score_raw": 0.1862300000947903,
+    "geval_score": 1.7449200003791612,
+    "delta": -0.2550799996208388,
+    "reason": "The communicative intent of the final user turn is a statement expressing frustration about Ron Marston's frequent calls. The key topics are Ron Marston's behavior and the user's annoyance. The Actual Output does not directly address the user's statement or the topics of Ron's behavior and the user's frustration. It is not topically consistent, as it introduces an unrelated question about a 'message,' which is not mentioned in the conversation history."
   },
   {
     "conversation_id": "conv_18_VHRED_attn sample_temp1.0_k0_p0.0",
     "stratum": 5,
     "model": "VHRED_attn sample_temp1.0_k0_p0.0",
     "human_score": 1.25,
-    "geval_score_raw": 0.14240024099117482,
-    "geval_score": 1.5696009639646993,
-    "delta": 0.3196009639646993,
-    "reason": "The Actual Output does not address the congratulatory intent of the final user turn, which is a statement. It is also not topically consistent with the conversation about the promotion and the Walker Avenue branch. The response is unrelated to the key topics and entities discussed."
+    "geval_score_raw": 0.11388015013401312,
+    "geval_score": 1.4555206005360524,
+    "delta": 0.20552060053605237,
+    "reason": "The communicative intent of the final user turn is a congratulatory statement. The key topics and entities are Jim's promotion and the Walker Avenue branch. The Actual Output does not address the congratulatory intent and is not topically consistent with the conversation, as it introduces an unrelated sentiment of being ignored."
   }
 ]
