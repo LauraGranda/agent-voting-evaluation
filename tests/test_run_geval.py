@@ -11,6 +11,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 from run_geval import (
+    CHECKPOINT_EVERY,
     SCALE_MIN,
     SCALE_RANGE,
     _basic_stats,
@@ -19,10 +20,13 @@ from run_geval import (
     _rescale_0_1_to_1_5,
     build_geval_metric,
     build_test_case,
+    compute_summary,
     estimate_tokens_and_cost,
+    evaluate_dataset,
     generate_summary_stats,
     load_checkpoint,
     parse_args,
+    render_summary_markdown,
     save_checkpoint,
     write_results,
 )
@@ -239,6 +243,23 @@ def test_load_checkpoint_missing(tmp_path: Path) -> None:
     assert ids == set()
 
 
+def test_load_checkpoint_corrupt_rotates_to_bak(tmp_path: Path) -> None:
+    """A malformed-JSON checkpoint must not crash the run; it's rotated to .bak.
+
+    Regression guard: a kill -9 mid-write or a disk-full event during the
+    atomic rename can leave a truncated checkpoint. The next run must
+    degrade gracefully rather than blow up on startup.
+    """
+    cp = tmp_path / "checkpoint.json"
+    cp.write_text("[", encoding="utf-8")  # malformed JSON
+    loaded, ids = load_checkpoint(cp)
+    assert loaded == []
+    assert ids == set()
+    # Original is gone (renamed); .bak preserves the corrupt content for inspection.
+    assert not cp.exists()
+    assert (tmp_path / "checkpoint.json.bak").exists()
+
+
 def test_save_checkpoint_atomic_no_tmp_left(
     tmp_path: Path, fake_results: list[dict[str, Any]]
 ) -> None:
@@ -273,7 +294,84 @@ def test_results_contain_required_ac_fields(fake_results: list[dict[str, Any]]) 
         assert required.issubset(entry.keys())
 
 
-# ─── generate_summary_stats ──────────────────────────────────────────────
+# ─── compute_summary (pure, no I/O) ──────────────────────────────────────
+
+
+def test_compute_summary_counts_ok_and_fail(fake_results: list[dict[str, Any]]) -> None:
+    s = compute_summary(fake_results)
+    assert s["n_total"] == len(fake_results)
+    assert s["n_ok"] == len([r for r in fake_results if r["geval_score"] is not None])
+    assert s["n_fail"] == len([r for r in fake_results if r["geval_score"] is None])
+
+
+def test_compute_summary_aggregates_tokens_and_cost(
+    fake_results: list[dict[str, Any]],
+) -> None:
+    s = compute_summary(fake_results)
+    expected_in = sum(r["tokens_used"]["input"] for r in fake_results if r["tokens_used"])
+    expected_out = sum(r["tokens_used"]["output"] for r in fake_results if r["tokens_used"])
+    expected_cost = sum(r["cost_usd"] for r in fake_results if r["cost_usd"] is not None)
+    assert s["input_tokens"] == expected_in
+    assert s["output_tokens"] == expected_out
+    assert s["total_cost_usd"] == pytest.approx(expected_cost)
+
+
+def test_compute_summary_spearman_when_n_lt_min() -> None:
+    """With fewer than MIN_FOR_SPEARMAN paired entries, rho/p are NaN."""
+    one_result = [_ok("c0", 4.0, 4.5, 0.875, 1000, 80, 0.003)]
+    s = compute_summary(one_result)
+    assert s["spearman_rho"] != s["spearman_rho"]  # NaN check
+    assert s["spearman_p"] != s["spearman_p"]
+
+
+def test_compute_summary_groups_by_family(
+    fake_results: list[dict[str, Any]],
+    entry: dict[str, Any],
+) -> None:
+    """Family bucketing collapses GPT2_*, S2S_*, etc. to coarse families."""
+    fake_dataset = []
+    for r in fake_results:
+        e = json.loads(json.dumps(entry))
+        e["metadata"]["conversation_id"] = r["conversation_id"]
+        e["metadata"]["model"] = r["conversation_id"].split("_", 2)[-1]
+        fake_dataset.append(e)
+    s = compute_summary(fake_results, fake_dataset)
+    # Failed entry is excluded; remaining 4 OK ones span ground-truth/negative-sample/GPT2/HRED
+    assert "ground-truth" in s["by_family"]
+    assert "GPT2" in s["by_family"]
+    # Each family bucket carries a full _basic_stats dict
+    assert {"n", "mean", "median", "std", "min", "max"} <= set(s["by_family"]["GPT2"].keys())
+
+
+# ─── render_summary_markdown (pure, no I/O) ──────────────────────────────
+
+
+def test_render_markdown_contains_all_sections(fake_results: list[dict[str, Any]]) -> None:
+    """All five expected H2 sections render when there are failures and families."""
+    summary = compute_summary(fake_results)
+    md = render_summary_markdown(summary)
+    assert "## Run completion" in md
+    assert "## G-Eval score distribution (1-5)" in md
+    assert "## Spearman correlation vs. human_score" in md
+    assert "## Failed entries" in md  # one failure in fake_results
+
+
+def test_render_markdown_skips_optional_sections_when_empty() -> None:
+    """No families and no failures → those tables are omitted."""
+    summary = compute_summary([_ok("c0", 4.0, 4.5, 0.875, 1000, 80, 0.003)])
+    md = render_summary_markdown(summary)
+    assert "## Failed entries" not in md
+    assert "## Breakdown by model family" not in md
+
+
+def test_render_markdown_escapes_pipe_in_error_message() -> None:
+    """Pipe in error string must be escaped so the markdown table doesn't break."""
+    summary = compute_summary([_fail("c0", 3.0, "boom | with pipe")])
+    md = render_summary_markdown(summary)
+    assert "boom \\| with pipe" in md
+
+
+# ─── generate_summary_stats (orchestrator) ───────────────────────────────
 
 
 def test_summary_stats_idempotent(
@@ -353,6 +451,99 @@ def test_evaluate_one_retryable_failure_after_retries(entry: dict[str, Any]) -> 
 
     assert result["geval_score"] is None
     assert "RateLimitError" in result["error"]
+
+
+def test_evaluate_one_fatal_error_propagates(entry: dict[str, Any]) -> None:
+    """AuthenticationError must NOT be swallowed — it aborts the run instead."""
+    fake_metric = MagicMock()
+    fake_metric.measure.side_effect = openai.AuthenticationError(
+        message="invalid api key", response=MagicMock(), body=None
+    )
+
+    with pytest.raises(openai.AuthenticationError):
+        _evaluate_one(entry, fake_metric, prompt_text="P", model="gpt-4o")
+
+
+# ─── evaluate_dataset incremental persistence ────────────────────────────
+
+
+def _build_minidata(n: int, entry_template: dict[str, Any]) -> list[dict[str, Any]]:
+    """Tiny dataset for evaluate_dataset tests, with unique conversation_ids."""
+    out = []
+    for i in range(n):
+        e = json.loads(json.dumps(entry_template))
+        e["metadata"]["conversation_id"] = f"conv_{i}"
+        out.append(e)
+    return out
+
+
+def test_evaluate_dataset_writes_results_at_each_checkpoint(
+    tmp_path: Path,
+    entry: dict[str, Any],
+) -> None:
+    """After CHECKPOINT_EVERY entries, results.json + summary.md must already
+    be on disk — so a Ctrl+C never leaves the user with only a checkpoint."""
+    n = CHECKPOINT_EVERY  # exactly one checkpoint cycle
+    dataset = _build_minidata(n, entry)
+    fake_metric = MagicMock()
+    fake_metric.score = 0.5
+    fake_metric.reason = "ok"
+
+    with patch("run_geval.build_geval_metric", return_value=fake_metric):
+        evaluate_dataset(
+            dataset=dataset,
+            prompt_text="P",
+            model="gpt-4o",
+            output_dir=tmp_path,
+            limit=None,
+            resume=False,
+        )
+
+    assert (tmp_path / "geval_results.json").exists()
+    assert (tmp_path / "geval_summary_stats.md").exists()
+    assert (tmp_path / ".geval_checkpoint.json").exists()
+    with open(tmp_path / "geval_results.json", encoding="utf-8") as f:
+        written = json.load(f)
+    assert len(written) == n
+
+
+def test_evaluate_dataset_persists_on_fatal_via_finally(
+    tmp_path: Path,
+    entry: dict[str, Any],
+) -> None:
+    """A FATAL_EXCEPTIONS abort must STILL produce results.json from the
+    finally-block. Demonstrates the worst-case shutdown path: 2 entries
+    succeed, the 3rd raises AuthenticationError."""
+    dataset = _build_minidata(3, entry)
+    fake_metric = MagicMock()
+    fake_metric.score = 0.5
+    fake_metric.reason = "ok"
+    # Calls 1 and 2 succeed, call 3 raises AuthenticationError.
+    fake_metric.measure.side_effect = [
+        None,
+        None,
+        openai.AuthenticationError(message="bad key", response=MagicMock(), body=None),
+    ]
+
+    with (
+        patch("run_geval.build_geval_metric", return_value=fake_metric),
+        pytest.raises(openai.AuthenticationError),
+    ):
+        evaluate_dataset(
+            dataset=dataset,
+            prompt_text="P",
+            model="gpt-4o",
+            output_dir=tmp_path,
+            limit=None,
+            resume=False,
+        )
+
+    # Even though the run aborted, the finally-block persisted the 2 OK entries.
+    assert (tmp_path / "geval_results.json").exists()
+    with open(tmp_path / "geval_results.json", encoding="utf-8") as f:
+        written = json.load(f)
+    assert len(written) == 2  # noqa: PLR2004
+    assert all(r["geval_score"] is not None for r in written)
 
 
 # ─── CLI parser ──────────────────────────────────────────────────────────

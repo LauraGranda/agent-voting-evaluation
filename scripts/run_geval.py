@@ -79,6 +79,15 @@ RETRYABLE_EXCEPTIONS: Final[tuple[type[Exception], ...]] = (
     openai.InternalServerError,
 )
 
+# Errors that mean the run cannot succeed at all (bad credentials, wrong
+# model name, account suspended). Re-raising aborts the loop instead of
+# burning ~75 minutes recording 900 identical failures.
+FATAL_EXCEPTIONS: Final[tuple[type[Exception], ...]] = (
+    openai.AuthenticationError,
+    openai.PermissionDeniedError,
+    openai.NotFoundError,
+)
+
 logger = logging.getLogger("run_geval")
 
 
@@ -180,11 +189,32 @@ def _measure_with_retry(metric: GEval, tc: LLMTestCase) -> tuple[int, str]:
 
 # ─── Checkpointing ───────────────────────────────────────────────────────
 def load_checkpoint(checkpoint_path: Path) -> tuple[list[dict[str, Any]], set[str]]:
-    """Return (results_so_far, completed_ids). Empty if no checkpoint exists."""
+    """Return (results_so_far, completed_ids). Empty if no checkpoint exists.
+
+    A corrupt checkpoint (truncated JSON, partial write) is rotated to a
+    ``.bak`` sibling and treated as "no checkpoint" so the run can restart
+    rather than crash on startup. The .bak file lets the user inspect what
+    was lost (atomic write + rename normally prevents this, but a kill -9
+    or disk-full mid-rename can leave a malformed file).
+    """
     if not checkpoint_path.exists():
         return [], set()
-    with open(checkpoint_path, encoding="utf-8") as f:
-        results: list[dict[str, Any]] = json.load(f)
+    try:
+        with open(checkpoint_path, encoding="utf-8") as f:
+            results: list[dict[str, Any]] = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        backup = checkpoint_path.with_suffix(checkpoint_path.suffix + ".bak")
+        try:
+            checkpoint_path.replace(backup)
+            logger.warning(
+                "Corrupt checkpoint at %s (%s); moved to %s and starting fresh",
+                checkpoint_path,
+                exc,
+                backup,
+            )
+        except OSError:
+            logger.warning("Corrupt checkpoint at %s (%s); starting fresh", checkpoint_path, exc)
+        return [], set()
     ids = {r["conversation_id"] for r in results}
     logger.info("Resuming from checkpoint: %d entries already evaluated", len(results))
     return results, ids
@@ -217,8 +247,16 @@ def evaluate_dataset(  # noqa: PLR0913
     limit: int | None,
     resume: bool,
 ) -> list[dict[str, Any]]:
-    """Iterate over ``dataset`` and run G-Eval per entry. Returns results."""
+    """Iterate over ``dataset`` and run G-Eval per entry. Returns results.
+
+    Every ``CHECKPOINT_EVERY`` entries the script writes ALL three artifacts
+    (checkpoint, results.json, summary.md) so a Ctrl+C / power loss leaves
+    usable AC artifacts on disk — never just a checkpoint that needs recovery.
+    """
     checkpoint_path = output_dir / ".geval_checkpoint.json"
+    results_path = output_dir / "geval_results.json"
+    summary_path = output_dir / "geval_summary_stats.md"
+
     if resume:
         results, done_ids = load_checkpoint(checkpoint_path)
     else:
@@ -237,46 +275,69 @@ def evaluate_dataset(  # noqa: PLR0913
     n_fail = len(results) - n_ok
     t0 = perf_counter()
 
-    for idx, entry in enumerate(pending, start=len(results) + 1):
-        conv_id = entry["metadata"]["conversation_id"]
-        human_score = entry["metadata"]["human_score"]
-        result = _evaluate_one(entry, metric, prompt_text, model)
+    try:
+        for idx, entry in enumerate(pending, start=len(results) + 1):
+            conv_id = entry["metadata"]["conversation_id"]
+            human_score = entry["metadata"]["human_score"]
+            result = _evaluate_one(entry, metric, prompt_text, model)
 
-        if result.get("geval_score") is not None:
-            n_ok += 1
-            elapsed = result.pop("_elapsed_s", 0.0)
-            logger.info(
-                "[%03d/%03d] %s  geval=%.2f  human=%.2f  Δ=%+.2f  tok=%d  $%.4f  %.2fs",
-                idx,
-                total,
-                conv_id,
-                result["geval_score"],
-                human_score,
-                result["delta"],
-                result["tokens_used"]["total"],
-                result["cost_usd"],
-                elapsed,
-            )
-        else:
-            n_fail += 1
-            logger.error(
-                "[%03d/%03d] %s  FAILED after %d attempts: %s",
-                idx,
-                total,
-                conv_id,
-                result.get("attempts", 0),
-                result.get("error", "unknown"),
-            )
+            if result.get("geval_score") is not None:
+                n_ok += 1
+                elapsed = result.pop("_elapsed_s", 0.0)
+                logger.info(
+                    "[%03d/%03d] %s  geval=%.2f  human=%.2f  Δ=%+.2f  tok=%d  $%.4f  %.2fs",
+                    idx,
+                    total,
+                    conv_id,
+                    result["geval_score"],
+                    human_score,
+                    result["delta"],
+                    result["tokens_used"]["total"],
+                    result["cost_usd"],
+                    elapsed,
+                )
+            else:
+                n_fail += 1
+                logger.error(
+                    "[%03d/%03d] %s  FAILED after %d attempts: %s",
+                    idx,
+                    total,
+                    conv_id,
+                    result.get("attempts", 0),
+                    result.get("error", "unknown"),
+                )
 
-        results.append(result)
-        if idx % CHECKPOINT_EVERY == 0:
-            save_checkpoint(results, checkpoint_path)
-            logger.info("Checkpoint saved at %d/%d", idx, total)
+            results.append(result)
+            if idx % CHECKPOINT_EVERY == 0:
+                _persist_partial(
+                    results, checkpoint_path, results_path, summary_path, dataset, model
+                )
+                logger.info("Checkpoint + outputs saved at %d/%d", idx, total)
+    finally:
+        # Persist whatever we have on success, on Ctrl+C, on fatal exception.
+        _persist_partial(results, checkpoint_path, results_path, summary_path, dataset, model)
 
-    save_checkpoint(results, checkpoint_path)
     elapsed_total = perf_counter() - t0
     _log_run_summary(results, n_ok, n_fail, total, elapsed_total)
     return results
+
+
+def _persist_partial(  # noqa: PLR0913
+    results: list[dict[str, Any]],
+    checkpoint_path: Path,
+    results_path: Path,
+    summary_path: Path,
+    dataset: list[dict[str, Any]],
+    model: str,
+) -> None:
+    """Write checkpoint + results.json + summary.md atomically. Never raises."""
+    try:
+        save_checkpoint(results, checkpoint_path)
+        write_results(results, results_path)
+        generate_summary_stats(results, summary_path, dataset=dataset, model=model)
+    except OSError:
+        # Disk full, permission denied, etc. Log but don't kill the run.
+        logger.exception("Failed to persist partial results")
 
 
 def _evaluate_one(
@@ -314,6 +375,12 @@ def _evaluate_one(
             "attempts": attempts,
             "_elapsed_s": elapsed,
         }
+    except FATAL_EXCEPTIONS:
+        # Bad credentials / wrong model / no access. The next 899 entries
+        # will fail identically, so abort the run instead of burning 75
+        # minutes on guaranteed failures. The finally-block in the caller
+        # still persists what we have.
+        raise
     except (RetryError, *RETRYABLE_EXCEPTIONS) as exc:
         return _failure_result(conv_id, human_score, model, timestamp, exc, retried=True)
     except Exception as exc:
@@ -400,7 +467,152 @@ def _basic_stats(values: Iterable[float]) -> dict[str, float]:
     }
 
 
-def generate_summary_stats(  # noqa: PLR0915 — sequential markdown writer; splitting would add ceremony, not clarity
+def compute_summary(
+    results: list[dict[str, Any]],
+    dataset: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Compute descriptive stats from a results list — pure, no I/O.
+
+    Separated from rendering so the numbers can be unit-tested directly
+    without parsing markdown.
+    """
+    ok = [r for r in results if r.get("geval_score") is not None]
+    fail = [r for r in results if r.get("geval_score") is None]
+
+    overall = _basic_stats(r["geval_score"] for r in ok)
+
+    if len(ok) >= MIN_FOR_SPEARMAN:
+        rho_val, p_val = spearmanr([r["human_score"] for r in ok], [r["geval_score"] for r in ok])
+        rho, p = float(rho_val), float(p_val)
+    else:
+        rho, p = float("nan"), float("nan")
+
+    by_family: dict[str, dict[str, float]] = {}
+    if dataset is not None:
+        id_to_model = {e["metadata"]["conversation_id"]: e["metadata"]["model"] for e in dataset}
+        family_scores: dict[str, list[float]] = {}
+        for r in ok:
+            m = id_to_model.get(r["conversation_id"], "")
+            family = _model_family(m) if m else "unknown"
+            family_scores.setdefault(family, []).append(r["geval_score"])
+        for family, scores in family_scores.items():
+            by_family[family] = _basic_stats(scores)
+
+    return {
+        "n_total": len(results),
+        "n_ok": len(ok),
+        "n_fail": len(fail),
+        "input_tokens": sum(r["tokens_used"]["input"] for r in ok),
+        "output_tokens": sum(r["tokens_used"]["output"] for r in ok),
+        "total_cost_usd": sum(r["cost_usd"] for r in ok),
+        "overall": overall,
+        "spearman_rho": rho,
+        "spearman_p": p,
+        "n_paired": len(ok),
+        "by_family": by_family,
+        "failed_entries": [
+            {
+                "conversation_id": r["conversation_id"],
+                "attempts": r.get("attempts", "n/a"),
+                "error": r.get("error", ""),
+            }
+            for r in fail
+        ],
+    }
+
+
+def render_summary_markdown(
+    summary: dict[str, Any],
+    *,
+    model: str = DEFAULT_MODEL,
+    prompt_path: Path = PROMPT_PATH,
+) -> str:
+    """Render a precomputed summary dict as a markdown string — pure, no I/O."""
+    rel_prompt = prompt_path.relative_to(PROJECT_ROOT) if prompt_path.is_absolute() else prompt_path
+    lines: list[str] = [
+        "# G-Eval Run — Summary Statistics\n",
+        f"- **Model**: `{model}`",
+        f"- **Prompt**: `{rel_prompt}`",
+        f"- **Generated**: {datetime.now(UTC).isoformat()}\n",
+        *_render_completion_table(summary),
+        *_render_distribution_table(summary["overall"]),
+        *_render_spearman_table(summary),
+    ]
+    if summary["by_family"]:
+        lines.extend(_render_family_table(summary["by_family"]))
+    if summary["failed_entries"]:
+        lines.extend(_render_failed_table(summary["failed_entries"]))
+    return "\n".join(lines)
+
+
+def _render_completion_table(s: dict[str, Any]) -> list[str]:
+    pct_ok = 100 * s["n_ok"] / max(1, s["n_total"])
+    return [
+        "## Run completion\n",
+        "| Metric | Value |",
+        "|---|---|",
+        f"| Total entries | {s['n_total']} |",
+        f"| Successful | {s['n_ok']} ({pct_ok:.2f}%) |",
+        f"| Failed | {s['n_fail']} |",
+        f"| Input tokens | {s['input_tokens']:,} |",
+        f"| Output tokens | {s['output_tokens']:,} |",
+        f"| Total cost | ${s['total_cost_usd']:.4f} |\n",
+    ]
+
+
+def _render_distribution_table(overall: dict[str, float]) -> list[str]:
+    lines = [
+        "## G-Eval score distribution (1-5)\n",
+        "| Stat | Value |",
+        "|---|---|",
+    ]
+    for k in ("n", "mean", "median", "std", "min", "max"):
+        lines.append(f"| {k} | {overall[k]} |")
+    lines.append("")
+    return lines
+
+
+def _render_spearman_table(s: dict[str, Any]) -> list[str]:
+    return [
+        "## Spearman correlation vs. human_score\n",
+        "| Metric | Value |",
+        "|---|---|",
+        f"| rho | {s['spearman_rho']:.4f} |",
+        f"| p-value | {s['spearman_p']:.6g} |",
+        f"| n (paired) | {s['n_paired']} |\n",
+    ]
+
+
+def _render_family_table(by_family: dict[str, dict[str, float]]) -> list[str]:
+    lines = [
+        "## Breakdown by model family\n",
+        "| Family | n | mean | median | std | min | max |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for family in sorted(by_family):
+        st = by_family[family]
+        lines.append(
+            f"| {family} | {st['n']} | {st['mean']} | {st['median']} | "
+            f"{st['std']} | {st['min']} | {st['max']} |"
+        )
+    lines.append("")
+    return lines
+
+
+def _render_failed_table(failed: list[dict[str, Any]]) -> list[str]:
+    lines = [
+        "## Failed entries\n",
+        "| conversation_id | attempts | error |",
+        "|---|---|---|",
+    ]
+    for f in failed:
+        err = str(f.get("error") or "").replace("|", "\\|")
+        lines.append(f"| {f['conversation_id']} | {f.get('attempts', 'n/a')} | {err} |")
+    lines.append("")
+    return lines
+
+
+def generate_summary_stats(
     results: list[dict[str, Any]],
     out_path: Path,
     *,
@@ -408,92 +620,15 @@ def generate_summary_stats(  # noqa: PLR0915 — sequential markdown writer; spl
     model: str = DEFAULT_MODEL,
     prompt_path: Path = PROMPT_PATH,
 ) -> None:
-    """Compute descriptive stats and Spearman rho; write a markdown report.
+    """Compute summary stats, render markdown, and write to ``out_path``.
 
-    ``dataset`` is used only to attach the model name to each result entry
-    when the result itself doesn't carry it (the schema does, but the helper
-    accepts an override for tests).
+    Thin orchestrator. Splitting compute_summary / render_summary_markdown
+    keeps the numerical logic testable without parsing markdown.
     """
     out_path.parent.mkdir(parents=True, exist_ok=True)
-
-    ok = [r for r in results if r.get("geval_score") is not None]
-    fail = [r for r in results if r.get("geval_score") is None]
-
-    overall = _basic_stats(r["geval_score"] for r in ok)
-    if len(ok) >= MIN_FOR_SPEARMAN:
-        rho_val, p_val = spearmanr([r["human_score"] for r in ok], [r["geval_score"] for r in ok])
-        rho, p = float(rho_val), float(p_val)
-    else:
-        rho, p = float("nan"), float("nan")
-
-    id_to_model: dict[str, str] = {}
-    if dataset is not None:
-        id_to_model = {e["metadata"]["conversation_id"]: e["metadata"]["model"] for e in dataset}
-
-    by_family: dict[str, list[float]] = {}
-    for r in ok:
-        m = id_to_model.get(r["conversation_id"], "")
-        family = _model_family(m) if m else "unknown"
-        by_family.setdefault(family, []).append(r["geval_score"])
-
-    in_tok = sum(r["tokens_used"]["input"] for r in ok)
-    out_tok = sum(r["tokens_used"]["output"] for r in ok)
-    cost = sum(r["cost_usd"] for r in ok)
-
-    lines: list[str] = []
-    lines.append("# G-Eval Run — Summary Statistics\n")
-    lines.append(f"- **Model**: `{model}`")
-    lines.append(
-        f"- **Prompt**: `{prompt_path.relative_to(PROJECT_ROOT) if prompt_path.is_absolute() else prompt_path}`"
-    )
-    lines.append(f"- **Generated**: {datetime.now(UTC).isoformat()}\n")
-
-    lines.append("## Run completion\n")
-    lines.append("| Metric | Value |")
-    lines.append("|---|---|")
-    lines.append(f"| Total entries | {len(results)} |")
-    lines.append(f"| Successful | {len(ok)} ({100 * len(ok) / max(1, len(results)):.2f}%) |")
-    lines.append(f"| Failed | {len(fail)} |")
-    lines.append(f"| Input tokens | {in_tok:,} |")
-    lines.append(f"| Output tokens | {out_tok:,} |")
-    lines.append(f"| Total cost | ${cost:.4f} |\n")
-
-    lines.append("## G-Eval score distribution (1-5)\n")
-    lines.append("| Stat | Value |")
-    lines.append("|---|---|")
-    for k in ("n", "mean", "median", "std", "min", "max"):
-        lines.append(f"| {k} | {overall[k]} |")
-    lines.append("")
-
-    lines.append("## Spearman correlation vs. human_score\n")
-    lines.append("| Metric | Value |")
-    lines.append("|---|---|")
-    lines.append(f"| rho | {rho:.4f} |")
-    lines.append(f"| p-value | {p:.6g} |")
-    lines.append(f"| n (paired) | {len(ok)} |\n")
-
-    if by_family:
-        lines.append("## Breakdown by model family\n")
-        lines.append("| Family | n | mean | median | std | min | max |")
-        lines.append("|---|---|---|---|---|---|---|")
-        for family in sorted(by_family):
-            stats = _basic_stats(by_family[family])
-            lines.append(
-                f"| {family} | {stats['n']} | {stats['mean']} | {stats['median']} | "
-                f"{stats['std']} | {stats['min']} | {stats['max']} |"
-            )
-        lines.append("")
-
-    if fail:
-        lines.append("## Failed entries\n")
-        lines.append("| conversation_id | attempts | error |")
-        lines.append("|---|---|---|")
-        for r in fail:
-            err = (r.get("error") or "").replace("|", "\\|")
-            lines.append(f"| {r['conversation_id']} | {r.get('attempts', 'n/a')} | {err} |")
-        lines.append("")
-
-    out_path.write_text("\n".join(lines), encoding="utf-8")
+    summary = compute_summary(results, dataset)
+    md = render_summary_markdown(summary, model=model, prompt_path=prompt_path)
+    out_path.write_text(md, encoding="utf-8")
 
 
 # ─── CLI ─────────────────────────────────────────────────────────────────
@@ -527,8 +662,6 @@ def main() -> None:
     args = parse_args()
     output_dir: Path = args.output_dir
     log_path = output_dir / "logs" / "geval_execution.log"
-    results_path = output_dir / "geval_results.json"
-    summary_path = output_dir / "geval_summary_stats.md"
 
     setup_logging(log_path)
     load_dotenv(PROJECT_ROOT / ".env")
@@ -546,7 +679,10 @@ def main() -> None:
         "Evaluator model: %s | limit=%s | resume=%s", args.model, args.limit, not args.no_resume
     )
 
-    results = evaluate_dataset(
+    # evaluate_dataset writes results.json + summary.md + checkpoint every
+    # CHECKPOINT_EVERY entries AND in its finally-block, so the AC artifacts
+    # exist on disk regardless of how the run ends (success / Ctrl+C / fatal).
+    evaluate_dataset(
         dataset=dataset,
         prompt_text=prompt_text,
         model=args.model,
@@ -554,12 +690,7 @@ def main() -> None:
         limit=args.limit,
         resume=not args.no_resume,
     )
-
-    write_results(results, results_path)
-    logger.info("Wrote %d results to %s", len(results), results_path)
-
-    generate_summary_stats(results, summary_path, dataset=dataset, model=args.model)
-    logger.info("Wrote summary stats to %s", summary_path)
+    logger.info("Run complete. Outputs in %s", output_dir)
 
 
 if __name__ == "__main__":
@@ -567,8 +698,19 @@ if __name__ == "__main__":
         main()
         sys.exit(0)
     except KeyboardInterrupt:
-        logger.warning("Interrupted by user — partial results in checkpoint")
+        logger.warning(
+            "Interrupted by user — partial results saved to outputs/geval_results.json. "
+            "Re-run the same command to resume from checkpoint."
+        )
         sys.exit(130)
+    except FATAL_EXCEPTIONS as exc:
+        logger.exception(
+            "Fatal API error (%s). "
+            "This means bad credentials, wrong model name, or no access — fix and re-run. "
+            "Partial results saved to outputs/geval_results.json.",
+            type(exc).__name__,
+        )
+        sys.exit(3)
     except Exception:
-        logger.exception("Fatal error — see traceback above")
+        logger.exception("Unexpected error — see traceback above")
         sys.exit(1)
