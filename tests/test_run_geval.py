@@ -31,15 +31,33 @@ from run_geval import (
     write_results,
 )
 
-# Constants for test assertions (avoids ruff PLR2004 magic-value warnings)
+# Explicit literal constants for test assertions. Each value is the expected
+# outcome of the corresponding pure helper, hand-computed below so a reader
+# does not have to mentally evaluate the function under test.
+#
+# - EXPECTED_HUMAN_SCORE matches the `human_score` field in the `entry` fixture.
+# - EXPECTED_RESCALE_HALF is _rescale_0_1_to_1_5(0.5) = 1.0 + 4.0 * 0.5.
+# - EXPECTED_RESCALE_FACTOR_AT_08 is _rescale_0_1_to_1_5(0.8) = 1.0 + 4.0 * 0.8.
+# - EXPECTED_BASIC_* match _basic_stats([1.0, 2.0, 3.0, 4.0, 5.0]).
+# - EXPECTED_CLI_LIMIT mirrors the CLI flag value passed in the test.
 EXPECTED_HUMAN_SCORE = 4.5
 EXPECTED_RESCALE_HALF = 3.0
-EXPECTED_RESCALE_FACTOR_AT_08 = round(SCALE_MIN + SCALE_RANGE * 0.8, 4)
+EXPECTED_RESCALE_FACTOR_AT_08 = 4.2
 EXPECTED_BASIC_N = 5
 EXPECTED_BASIC_MEAN = 3.0
 EXPECTED_BASIC_MIN = 1.0
 EXPECTED_BASIC_MAX = 5.0
 EXPECTED_CLI_LIMIT = 5
+# How many entries succeed before the simulated AuthenticationError aborts
+# the run in test_evaluate_dataset_persists_on_fatal_via_finally. The
+# dataset has this many + 1 entries: the last one fails fatally.
+EXPECTED_SUCCESSFUL_ENTRIES_BEFORE_FATAL = 2
+
+# Sanity check: the rescale anchors must match what the production code uses.
+# If SCALE_MIN/SCALE_RANGE ever change in scripts/run_geval.py, this fails
+# loudly at import time so the test constants are kept in sync.
+assert SCALE_MIN + SCALE_RANGE * 0.5 == EXPECTED_RESCALE_HALF
+assert round(SCALE_MIN + SCALE_RANGE * 0.8, 4) == EXPECTED_RESCALE_FACTOR_AT_08
 
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────
@@ -512,16 +530,17 @@ def test_evaluate_dataset_persists_on_fatal_via_finally(
     entry: dict[str, Any],
 ) -> None:
     """A FATAL_EXCEPTIONS abort must STILL produce results.json from the
-    finally-block. Demonstrates the worst-case shutdown path: 2 entries
-    succeed, the 3rd raises AuthenticationError."""
-    dataset = _build_minidata(3, entry)
+    finally-block. Demonstrates the worst-case shutdown path: the first
+    EXPECTED_SUCCESSFUL_ENTRIES_BEFORE_FATAL entries succeed, then the next
+    one raises AuthenticationError and aborts the run."""
+    n_ok = EXPECTED_SUCCESSFUL_ENTRIES_BEFORE_FATAL
+    dataset = _build_minidata(n_ok + 1, entry)
     fake_metric = MagicMock()
     fake_metric.score = 0.5
     fake_metric.reason = "ok"
-    # Calls 1 and 2 succeed, call 3 raises AuthenticationError.
+    # First n_ok calls succeed, the next one raises AuthenticationError.
     fake_metric.measure.side_effect = [
-        None,
-        None,
+        *([None] * n_ok),
         openai.AuthenticationError(message="bad key", response=MagicMock(), body=None),
     ]
 
@@ -538,11 +557,11 @@ def test_evaluate_dataset_persists_on_fatal_via_finally(
             resume=False,
         )
 
-    # Even though the run aborted, the finally-block persisted the 2 OK entries.
+    # Even though the run aborted, the finally-block persisted the OK entries.
     assert (tmp_path / "geval_results.json").exists()
     with open(tmp_path / "geval_results.json", encoding="utf-8") as f:
         written = json.load(f)
-    assert len(written) == 2  # noqa: PLR2004
+    assert len(written) == EXPECTED_SUCCESSFUL_ENTRIES_BEFORE_FATAL
     assert all(r["geval_score"] is not None for r in written)
 
 
@@ -557,6 +576,9 @@ def test_cli_default_args() -> None:
 
 
 def test_cli_limit_and_no_resume() -> None:
-    args = parse_args(["--limit", "5", "--no-resume"])
+    """--limit N is parsed as an int; --no-resume sets the resume flag false."""
+    # Single source of truth: derive the CLI input from the expected constant
+    # so a reader sees the input/output relationship in one place.
+    args = parse_args(["--limit", str(EXPECTED_CLI_LIMIT), "--no-resume"])
     assert args.limit == EXPECTED_CLI_LIMIT
     assert args.no_resume is True

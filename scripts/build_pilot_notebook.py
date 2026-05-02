@@ -6,11 +6,10 @@ regenerate or audit. Running it writes the notebook to disk without executing.
 
 from __future__ import annotations
 
-import importlib
 from pathlib import Path
 from typing import Any
 
-nbformat: Any = importlib.import_module("nbformat")
+import nbformat  # type: ignore[import-untyped]  # nbformat ships no type stubs
 
 NB_PATH = Path("notebooks/02_prompt_pilot.ipynb")
 
