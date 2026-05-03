@@ -178,7 +178,10 @@ def test_build_test_case_actual_output(entry: dict[str, Any]) -> None:
 # ─── build_geval_metric ──────────────────────────────────────────────────
 
 
-def test_build_geval_metric_uses_given_model() -> None:
+def test_build_geval_metric_uses_given_model(monkeypatch: pytest.MonkeyPatch) -> None:
+    # GEval validates OPENAI_API_KEY on init; set a dummy so this offline test
+    # works in CI (no live calls are made — we only inspect the model attr).
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-dummy")
     metric = build_geval_metric("criteria text", "gpt-4o-mini")
     # GEval stores the model on either ``evaluation_model`` or ``model`` depending on version.
     model_attr = getattr(metric, "evaluation_model", None) or getattr(metric, "model", None)
