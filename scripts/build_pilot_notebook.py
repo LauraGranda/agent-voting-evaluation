@@ -9,17 +9,17 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import nbformat  # type: ignore[import-untyped]
+import nbformat  # type: ignore[import-untyped]  # nbformat ships no type stubs
 
 NB_PATH = Path("notebooks/02_prompt_pilot.ipynb")
 
 
 def md(src: str) -> Any:
-    return nbformat.v4.new_markdown_cell(src.rstrip() + "\n")  # type: ignore[no-untyped-call]
+    return nbformat.v4.new_markdown_cell(src.rstrip() + "\n")
 
 
 def code(src: str) -> Any:
-    return nbformat.v4.new_code_cell(src.rstrip() + "\n")  # type: ignore[no-untyped-call]
+    return nbformat.v4.new_code_cell(src.rstrip() + "\n")
 
 
 CELL_1 = md(
