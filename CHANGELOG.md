@@ -9,6 +9,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **G-Eval Production Runner (HU-04)** - Script ejecutable sobre el 100% de los pares (900) para producir la línea base automática de relevancia, secuencial, con reintentos y checkpoint:
+    - `scripts/run_geval.py` - Runner de producción (~570 LOC):
+        - **Retries con backoff exponencial** vía `tenacity` (2s → 60s, 5 intentos) sobre errores transitorios de OpenAI: `RateLimitError`, `APITimeoutError`, `APIConnectionError`, `InternalServerError`. Errores fatales (`AuthenticationError`, `PermissionDeniedError`, `NotFoundError`) abortan el run en la primera entrada en vez de gastar 75 minutos en 900 fallos idénticos
+        - **Persistencia incremental**: `outputs/geval_results.json`, `outputs/geval_summary_stats.md` y `outputs/.geval_checkpoint.json` se escriben juntos cada 25 entradas y en el bloque `finally` del loop. Garantía: pase lo que pase (Ctrl+C, fallo fatal, crash), los artefactos AC quedan en disco con lo evaluado al momento
+        - **Resume automático** desde checkpoint en re-corrida del mismo comando; `--no-resume` lo ignora; checkpoint corrupto se rota a `.bak` y se arranca limpio en vez de crashear
+        - **Atomic write** (`.tmp` → rename) para los tres artefactos
+        - **Token counting determinista** con `tiktoken` (cl100k_base para gpt-4o), permite cómputo de costo offline reproducible en tests sin llamar a la API
+        - **Logging dual** (stdlib `logging`) a stdout + `outputs/logs/geval_execution.log` con per-entry INFO line + bloque RUN SUMMARY al final (tiempo total, mean per entry, total tokens, total cost, n_ok/n_fail)
+    - **Schema de `outputs/geval_results.json`** (campos del AC + auxiliares):
+        - AC: `conversation_id`, `geval_score` (escala 1-5), `human_score`, `model_used`, `timestamp` (ISO UTC), `tokens_used` (input/output/total), `cost_usd`
+        - Auxiliares: `geval_score_raw` (raw [0,1] de DeepEval), `delta`, `reason`, `attempts`
+        - Entradas fallidas: los 7 campos AC con `null` en `geval_score`/`tokens_used`/`cost_usd`, más `error: "<ExcType>: <msg>"`
+    - **Schema de `outputs/geval_summary_stats.md`**:
+        - Tabla "Run completion": total/successful/failed/tokens/cost
+        - Tabla "G-Eval score distribution (1-5)": n/mean/median/std/min/max
+        - Tabla "Spearman correlation vs. human_score": rho/p-value/n
+        - Tabla "Breakdown by model family" (ground-truth / negative-sample / GPT2 / S2S / HRED / VHRED)
+        - Tabla "Failed entries" con conversation_id/attempts/error
+    - **CLI**: `--limit N` (smoke test), `--no-resume` (ignora checkpoint), `--model` (default `gpt-4o`), `--output-dir` (default `outputs/`)
+    - **Códigos de salida**: `0` éxito | `1` error inesperado | `2` falta `OPENAI_API_KEY` | `3` error fatal de API (auth/modelo) | `130` Ctrl+C
+    - **Refactor de calidad** según code review:
+        - `compute_summary()` (lógica numérica pura) y `render_summary_markdown()` (formateo) separadas, ambas testeable sin parsear markdown
+        - 5 helpers privados de render por sección (`_render_completion_table`, `_render_distribution_table`, `_render_spearman_table`, `_render_family_table`, `_render_failed_table`)
+    - `tests/test_run_geval.py` - 41 tests sin llamadas a API (mocks de GEval):
+        - `_rescale_0_1_to_1_5` con casos límite (0/1/0.5/0.8)
+        - `build_test_case` (drop del trailing assistant turn, formato `[Turn N] Role: content`)
+        - `estimate_tokens_and_cost` (positividad y monotonicidad sobre la longitud del reason)
+        - `_model_family` parametrizado para 7 nombres
+        - `_basic_stats` (vacío y poblado)
+        - `compute_summary` (counts, agregación tokens/cost, NaN cuando n<2 para Spearman, agrupación por familia)
+        - `render_summary_markdown` (todas las secciones, omite tablas opcionales vacías, escapa `|` en mensajes de error)
+        - `generate_summary_stats` integración (idempotente, sobrevive a 100% fallos)
+        - `_evaluate_one` con métrica mockeada: éxito, fallo no-retryable, agotamiento de retries, propagación fatal
+        - `evaluate_dataset` (escritura incremental cada checkpoint, persistencia post-fatal vía finally)
+        - `load_checkpoint` (missing, corrupto rotado a `.bak`)
+        - CLI parser (defaults + `--limit`/`--no-resume`)
+    - **Smoke test E2E** verificado contra API real: 3/3 entries exitosos, ~$0.012, 13s; resume desde checkpoint sin duplicación
+    - **Costo estimado del run completo**: ~$3-5 en gpt-4o list pricing; ~30-60 minutos wall time (~3-4s/par)
+
+- **Speaker-labeled dataset schema** (fix al pipeline HU-02 surgido en el piloto HU-03) - Los roles `user`/`assistant` ahora se derivan del speaker label en vez de la paridad del índice del turno. La paridad fallaba cuando la longitud del contexto y el `response_speaker` no estaban alineados, produciendo turnos consecutivos del mismo rol que rompían la extracción del `input` en `serialize_test_case`:
+    - `scripts/download_dataset.py` - Preserva `{speaker, text}` en `turns[]` (antes se descartaba el speaker) y agrega `response_speaker` derivado de `reference[0]`. Parsing defensivo del `reference` faltante o malformado
+    - `scripts/transform_dataset.py` - `build_turns()` mapea `speaker == response_speaker → assistant`, todo lo demás → `user`. `serialize_test_case()` busca el último turno *user* (no `turns[-1]`) para el campo `input`
+    - `data/README.md` + template del generador - Documentan que `"A"`/`"B"` son los identificadores anónimos crudos del corpus DailyDialog-Zhao, no marcadores de género ni persona
+    - `configs/prompts/pilot_sample.json` - Regenerado con el campo `response_speaker` en metadata
+    - 30 tests parametrizados/regresión añadidos en `tests/test_download_dataset.py` y `tests/test_transform.py`
+
 - **G-Eval Relevance Prompt Pilot (HU-03)** - Diseño, ejecución y selección del prompt final de evaluación de relevancia para G-Eval sobre DailyDialog-Zhao, con evaluador `gpt-4o` (sucesor directo de GPT-4 en Liu et al., EMNLP 2023):
     - `configs/prompts/select_pilot_sample.py` - Sampler estratificado determinista (seed=42) que produce 20 entradas distribuidas en 5 estratos × 4 entradas:
         - Estrato 1: top-4 `ground-truth` por `human_score`
@@ -78,9 +124,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `notebooks/**`: `RUF001`, `RUF002` (letras griegas y signos `×`/`–`/`—` en strings y docstrings), `PLR2004` (thresholds como 0.05, 0.4, 0.7, 1.5), `B018`
     - `scripts/build_pilot_notebook.py`: `RUF001`, `RUF002`, `PLR2004` (el builder embebe el source del notebook como strings literales, por lo que hereda los mismos casos)
     - `configs/prompts/select_pilot_sample.py`: `PLR2004`, `S311` (`random.Random` con seed=42 para reproducibilidad, no criptografía)
-- `.gitignore` - añadido `.deepeval/` para excluir el directorio de telemetría que DeepEval crea bajo el cwd al instanciar la métrica
+- **`.gitignore`** - Dos cambios:
+    - Añadido `.deepeval/` para excluir el directorio de telemetría que DeepEval crea bajo el cwd al instanciar la métrica
+    - Reemplazado el patrón broad `outputs` (heredado de Hydra) por patrones específicos: `outputs/geval_results.json`, `outputs/geval_summary_stats.md`, `outputs/.geval_checkpoint.json`, `outputs/logs/*.log`, `outputs/figures/*.{png,pdf,svg}`. Los `.gitkeep` en `outputs/`, `outputs/logs/` y `outputs/figures/` versionan la estructura para que un clone fresco pueda ejecutar `run_geval.py` sin `mkdir` manual
 - `scripts/transform_dataset.py` - `zip(..., strict=True)` tras `ruff --fix` (B905); seguro porque las longitudes ya se asertan antes del zip
-- **Dependencies** - Nuevas librerías para ejecutar notebooks:
+- `scripts/build_pilot_notebook.py` - Vuelto al patrón convencional `import nbformat  # type: ignore[import-untyped]` (con comentario explicativo) en vez de `importlib.import_module(...)` con typing como `Any`. El nuevo patrón mantiene el type-checking donde mypy puede inferir y queda alineado con el resto del repo (e.g. `import requests  # type: ignore[import-untyped]` en `download_dataset.py`)
+- **Dependencies** - Nuevas librerías:
+    - `tenacity` (>= 9.0.0) - Reintentos con backoff exponencial sobre errores transitorios de la API OpenAI (usado por `run_geval.py`)
+    - `tiktoken` (>= 0.8.0) - Token counting determinista (cl100k_base) para gpt-4o; permite cómputo de costo offline reproducible en tests sin gastar API tokens
     - `jupyter` (>= 1.1.0) - Entorno Jupyter para ejecutar .ipynb
     - `nbconvert` (>= 7.16.0) - Conversión y ejecución de notebooks (para CI/CD)
 
