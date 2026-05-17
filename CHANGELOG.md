@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **G-Eval — Ejecución del run completo y análisis de resultados** - Ejecución de `scripts/run_geval.py` sobre el 100% del dataset y análisis interpretado de la línea base automática de relevancia:
+    - **Run completo ejecutado**: 900/900 pares evaluados con éxito (0 fallos), evaluador `gpt-4o`, 37m 21s wall time, 1.172.164 tokens (1.090.187 input / 81.977 output), costo real **$3.5453**
+    - **Resultado principal**: correlación de Spearman G-Eval vs. `human_score` = **0.7565** (`strong`, p ≈ 8.5e-168, n=900); Pearson r = 0.7106; Kendall τ = 0.5705
+    - **Artefactos del run**: `outputs/geval_results.json` (900 resultados par-a-par), `outputs/geval_summary_stats.md`, `outputs/logs/geval_execution.log`
+    - `scripts/analyze_geval.py` - Script de análisis reutilizable que lee `geval_results.json` + el dataset y produce un reporte interpretado y ordenado más figuras de soporte:
+        - **Métricas de concordancia**: Spearman ρ, Pearson r, Kendall τ, MAE (0.90), RMSE (1.14), sesgo medio Δ (−0.75), hit-rate dentro de ±0.5 (36%) y ±1.0 (63%)
+        - **Techo inter-anotador (human ceiling)**: implementación propia de la concordancia entre los 4 anotadores humanos como referencia para juzgar ρ — Spearman pairwise medio (0.466), Spearman leave-one-out (1 anotador vs. media de los otros 3 = 0.580), **Krippendorff α ordinal** (0.466) e **ICC(2,1)** (0.466). Hallazgo: G-Eval (0.756) **supera** el techo de un anotador individual por +0.176, porque las etiquetas humanas son ruidosas (α < 0.667) — un evaluador más potente no aportaría ganancia medible
+        - **Desglose por familia y por modelo individual**: n, media humana, media G-Eval, sesgo y MAE por grupo
+        - **Matriz de confusión por bandas** (scores redondeados 1-5) con acuerdo exacto de banda
+        - **Top-10 mayores desacuerdos** en ambas direcciones (sobre- y sub-estimación)
+        - Cuatro funciones de figura (`fig_scatter`, `fig_residuals`, `fig_delta_boxplot`, `fig_mean_by_family`, `fig_ceiling`) en modo headless (`matplotlib.use("Agg")`)
+        - **CLI**: `--results` (default `outputs/geval_results.json`), `--output-dir` (default `outputs/`)
+    - **Schema de `outputs/geval_analysis_report.md`**: reporte en 9 secciones — resumen ejecutivo, métricas de concordancia, techo inter-anotador, desglose por familia, desglose por modelo, matriz de confusión, mayores desacuerdos, figuras y guía de lectura
+    - **Figuras nuevas** en `outputs/figures/`: `05_geval_vs_human_scatter.png`, `06_residual_histogram.png`, `07_delta_by_family_boxplot.png`, `08_mean_score_by_family.png`, `09_ceiling_comparison.png`
+    - `.code_quality/ruff.toml` - `scripts/analyze_geval.py` añadido a `per-file-ignores` para `RUF001`/`RUF002`/`PLR2004` (letras griegas ρ/α en strings de salida y umbrales de correlación que son constantes de dominio, no magic numbers — mismo precedente que `build_pilot_notebook.py`)
+    - `.gitignore` - Ignora `.claude/scheduled_tasks.lock` (lock de runtime de Claude Code, regenerado por sesión)
+
 - **G-Eval Production Runner (HU-04)** - Script ejecutable sobre el 100% de los pares (900) para producir la línea base automática de relevancia, secuencial, con reintentos y checkpoint:
     - `scripts/run_geval.py` - Runner de producción (~570 LOC):
         - **Retries con backoff exponencial** vía `tenacity` (2s → 60s, 5 intentos) sobre errores transitorios de OpenAI: `RateLimitError`, `APITimeoutError`, `APIConnectionError`, `InternalServerError`. Errores fatales (`AuthenticationError`, `PermissionDeniedError`, `NotFoundError`) abortan el run en la primera entrada en vez de gastar 75 minutos en 900 fallos idénticos

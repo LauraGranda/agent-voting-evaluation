@@ -94,6 +94,9 @@ outputs/figures/*.png
 outputs/figures/*.pdf
 outputs/figures/*.svg
 
+# Claude Code runtime lock (regenerated per session, not project state)
+.claude/scheduled_tasks.lock
+
 ### Editors
 
 # Jupyter NB Checkpoints

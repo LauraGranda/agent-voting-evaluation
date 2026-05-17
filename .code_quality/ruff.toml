@@ -101,4 +101,8 @@ known-third-party = ["fastapi", "pydantic"]
 # The builder embeds notebook source as string literals, so the same exemptions
 # apply; random.Random is used for reproducibility (seed=42), not crypto.
 "scripts/build_pilot_notebook.py" = ["RUF001", "RUF002", "PLR2004"]
+# Statistical analysis report: legitimately uses Greek letters (ρ, α) in its
+# output strings and correlation-band thresholds (0.2, 0.4, ...) that are
+# domain constants, not magic numbers.
+"scripts/analyze_geval.py" = ["RUF001", "RUF002", "PLR2004"]
 "configs/prompts/select_pilot_sample.py" = ["PLR2004", "S311"]
