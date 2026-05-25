@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sistema de Votación — Análisis y selección del esquema de votación (HU-05)** - Documento de calidad académica que abre el bloque del sistema de votación agéntico y fija el operador de agregación del panel de jueces de IA:
+    - `docs/voting_scheme_analysis.md` - Análisis en 6 secciones, en español, con el formato de `docs/dataset_selection.md`:
+        - **Revisión de 5 esquemas** de agregación (mayoría/moda, media aritmética, mediana, votación ponderada y recuento de Borda), cada uno con descripción, ventajas, limitaciones y aplicabilidad a puntuaciones ordinales 1-5 emitidas por jueces de IA
+        - **7 criterios de selección** justificados (robustez ante empates, simplicidad, fundamentación en literatura, compatibilidad con escala ordinal 1-5, comparabilidad directa con G-Eval, paralelismo con la etiqueta humana y producción de un `agreement_level` significativo) con tabla comparativa esquema × criterio
+        - **Esquema seleccionado: media aritmética** (principal) + **mediana** reportada en paralelo como verificación de robustez; justificación de ~790 palabras (el AC exige ≥300). Argumento central: el `human_score` es la media de 4 anotadores, por lo que promediar el panel de IA lo vuelve el análogo metodológico exacto del panel humano
+        - Discusión **ordinal vs. categórico** (por qué Borda, diseñado para rankings de candidatos, no encaja en scoring absoluto por ítem)
+        - Definición del **`agreement_level`** en dos niveles: por ítem (`1 - std/std_max`) y a nivel dataset (Krippendorff α / ICC(2,1) / Spearman pairwise), reutilizando las funciones de `scripts/analyze_geval.py`
+        - **9 referencias** en formato APA, todas reales y consultables (Galton 1907; Stevens 1946; Arrow 1951; Clemen 1989; Liu et al. 2023; Zheng et al. 2023; Verga et al. 2024; Pacuit 2019; Brandt et al. 2016)
+    - Mapeo del esquema al contrato `{final_score, individual_scores, agreement_level}` del futuro módulo `src/voting/aggregator.py`, y nota para corregir en el issue del agregador la referencia errónea al issue #8 (debe apuntar a esta HU-05)
+
+## [0.4.0] - 2026-05-17
+
+### Added
+
 - **G-Eval — Ejecución del run completo y análisis de resultados** - Ejecución de `scripts/run_geval.py` sobre el 100% del dataset y análisis interpretado de la línea base automática de relevancia:
     - **Run completo ejecutado**: 900/900 pares evaluados con éxito (0 fallos), evaluador `gpt-4o`, 37m 21s wall time, 1.172.164 tokens (1.090.187 input / 81.977 output), costo real **$3.5453**
     - **Resultado principal**: correlación de Spearman G-Eval vs. `human_score` = **0.7565** (`strong`, p ≈ 8.5e-168, n=900); Pearson r = 0.7106; Kendall τ = 0.5705
