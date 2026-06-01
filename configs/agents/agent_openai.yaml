@@ -1,0 +1,30 @@
+---
+# INDEPENDENCE GUARANTEE:
+# This agent evaluates each conversation independently.
+# It has no access to scores from other agents.
+# It has no access to human annotation scores.
+# It has no access to G-Eval scores.
+# temperature=0.0 ensures deterministic outputs given the same input.
+
+name: "judge_openai"
+model: "gpt-4o"
+provider: "openai"
+api_key_env: "OPENAI_API_KEY"
+temperature: 0.0
+max_tokens: 512
+prompt_file: "configs/prompts/geval_relevance_prompt.txt"
+evaluation_dimension: "relevance"
+score_range:
+  min: 1
+  max: 5
+independence: true
+methodology_note: >
+  gpt-4o is the same model used in the G-Eval baseline (Liu et al., 2023).
+  This agent also reuses the V3 relevance prompt unchanged. With model
+  and prompt held constant, judge_openai differs from G-Eval only in
+  scoring mechanics (direct prompting with score parsing rather than
+  DeepEval's GEval form-filling on logprobs) and in being one judge of
+  an aggregated panel rather than a single-judge system. Any difference
+  in Spearman correlation with human judgments between judge_openai and
+  the G-Eval baseline is therefore attributable to these two factors,
+  not to model or prompt variation.
