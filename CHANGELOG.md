@@ -9,7 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Sistema de Votación — Diseño del panel de agentes juez** - Definición declarativa del cuerpo evaluador del sistema de votación. Sin llamadas a APIs ni ejecución, solo configs y diseño:
+- **Sistema de Votación — Módulo agregador `src/voting/aggregator.py` (HU-07)** - Implementación pura de la lógica de agregación de puntuaciones de los jueces del panel, sin llamadas a APIs ni dependencias pesadas:
+    - `src/voting/__init__.py` - Reexporta la API pública (`aggregate`, `SCHEME_NAME`).
+    - `src/voting/aggregator.py` - Cuatro funciones con docstrings tipo NumPy/Google y constantes a nivel de módulo con `Final[]` siguiendo el patrón de `scripts/run_geval.py`:
+        - `aggregate(scores)`: orquesta el flujo y devuelve el dict de salida.
+        - `validate_scores(scores)`: filtra `None`, recoge los `missing_agents` para `metadata`, valida rango `[SCORE_MIN, SCORE_MAX]` y lanza `ValueError` con el nombre del agente cuando un score está fuera.
+        - `compute_agreement(values)`: mapea la desviación estándar muestral a `"high"` (std ≤ 0.5), `"medium"` (std ≤ 1.0), `"low"` (std > 1.0) o `"n/a"` si n < 2.
+        - `_compute_final_score(values)`: aplica el esquema seleccionado en HU-05 (media aritmética) con redondeo a 2 decimales.
+    - **Esquema implementado** (HU-05): `SCHEME_NAME = "arithmetic_mean"`, media aritmética de los scores disponibles, resultado float continuo en [1, 5] **comparable directamente con G-Eval**.
+    - **Cinco casos extremos cubiertos y documentados en código**: input vacío (`ValueError "No agent scores provided"`), score fuera de rango (`ValueError` con nombre del agente), score `None` o agente ausente (cálculo sobre los restantes, `metadata.missing_agents`), un solo agente (`agreement_level = "n/a"`), unanimidad (`final_score` igual al valor compartido, `agreement_level = "high"`).
+    - **Estructura de retorno**: las tres claves exigidas por el AC del issue (`final_score`, `individual_scores`, `agreement_level`) más dos extras alineadas con el contrato del doc HU-05 (`scheme_used` y `metadata`). El `metadata` incluye `n_agents`, `std_deviation`, `min_score`, `max_score`, **`median_score`** (mediana reportada en paralelo como verificación de robustez del doc HU-05) y **`agreement_continuous`** (`1 - std/std_max` en [0, 1], `None` si n < 2, también del doc HU-05).
+    - `tests/test_aggregator.py` - 13 tests pytest sin llamadas a API, con fixtures que usan los nombres canónicos de los jueces (`judge_openai`, `judge_google`, `judge_anthropic`). Cubre los cinco escenarios obligatorios del AC (unanimidad, mayoría, "empate" demostrado como caso resoluble bajo media, dispersión máxima, valor faltante) más output, precisión/tipo, mínimos, máximos, mediana en metadata, agreement continuo en rango y agente único.
+    - **Verificación**: `13 passed` en `pytest tests/test_aggregator.py`; suite completa `119 passed` (sin regresiones); `pre-commit` (ruff + ruff-format + mypy) `Passed` en los tres archivos.
+
+## [0.5.0] - 2026-05-31
+
+### Added
+
+- **Sistema de Votación — Diseño del panel de agentes juez (HU-06)** - Definición declarativa del cuerpo evaluador del sistema de votación. Sin llamadas a APIs ni ejecución, solo configs y diseño:
     - **Tres archivos YAML de agentes** en `configs/agents/`, uno por proveedor, con la estructura exacta del Definition of Done (`name`, `model`, `provider`, `api_key_env`, `temperature`, `max_tokens`, `prompt_file`, `evaluation_dimension`, `score_range`, `independence`, `methodology_note`) y un bloque de comentarios `INDEPENDENCE GUARANTEE` al inicio:
         - `agent_openai.yaml`: `judge_openai` con modelo `gpt-4o`
         - `agent_google.yaml`: `judge_google` con modelo `gemini-2.5-flash`
