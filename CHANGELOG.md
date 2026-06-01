@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sistema de Votación — Diseño del panel de agentes juez** - Definición declarativa del cuerpo evaluador del sistema de votación. Sin llamadas a APIs ni ejecución, solo configs y diseño:
+    - **Tres archivos YAML de agentes** en `configs/agents/`, uno por proveedor, con la estructura exacta del Definition of Done (`name`, `model`, `provider`, `api_key_env`, `temperature`, `max_tokens`, `prompt_file`, `evaluation_dimension`, `score_range`, `independence`, `methodology_note`) y un bloque de comentarios `INDEPENDENCE GUARANTEE` al inicio:
+        - `agent_openai.yaml`: `judge_openai` con modelo `gpt-4o`
+        - `agent_google.yaml`: `judge_google` con modelo `gemini-2.5-flash`
+        - `agent_anthropic.yaml`: `judge_anthropic` con modelo `claude-haiku-4-5` (lanzamiento de octubre de 2025)
+    - **`temperature: 0.0` en los tres jueces**, no negociable: garantiza determinismo del juicio dado el mismo input y reproducibilidad entre corridas.
+    - **Prompt único V3 compartido por los tres agentes** (`configs/prompts/geval_relevance_prompt.txt`, sin modificar). Decisión metodológica explícita: se reemplaza el requisito de diversidad estilística de prompts por el de **control científico estricto**, de modo que las diferencias entre `judge_openai` y G-Eval queden atribuibles únicamente a la mecánica de scoring (form-filling con logprobs en DeepEval frente a prompting directo con parser), y las diferencias entre el panel agregado y G-Eval queden atribuibles a la mecánica de scoring más la agregación.
+    - **`gpt-4o` aparece tanto en G-Eval como en el panel** de forma deliberada, para aislar el efecto del método de evaluación del efecto del modelo.
+    - **Diversidad del panel** restringida a proveedor y modelo (tres proveedores independientes: OpenAI, Google, Anthropic).
+    - `docs/agent_panel_design.md` — Documento académico en español con once secciones (contexto, fundamentación metodológica, arquitectura con diagrama ASCII, descripción por agente, garantía de diversidad, mecanismo de independencia, mitigación de sesgos, relación con G-Eval, limitaciones conocidas, estimación de costos y referencias en formato APA con URL consultable). Sin emojis ni caracteres tipo IA, en línea con el estilo de `docs/voting_scheme_analysis.md`.
+    - **Estimación de costos del panel**: aproximadamente 7.61 USD para 900 pares (4.50 USD OpenAI, 0.89 USD Google, 2.22 USD Anthropic), llevando el total estimado de la tesis a entre 12 y 13 USD incluido el baseline G-Eval ya ejecutado.
+    - **Limitaciones declaradas explícitamente**: sesgo de longitud no mitigado por el prompt V3 (a vigilar en el pilot del panel), sacrificio consciente de la diversidad de estilo de prompt como precio del control científico, asimetría potencial de calidad por la presencia de `claude-haiku-4-5` (modelo eficiente) junto a dos modelos de mayor escala.
+
 - **Sistema de Votación — Análisis y selección del esquema de votación (HU-05)** - Documento de calidad académica que abre el bloque del sistema de votación agéntico y fija el operador de agregación del panel de jueces de IA:
     - `docs/voting_scheme_analysis.md` - Análisis en 6 secciones, en español, con el formato de `docs/dataset_selection.md`:
         - **Revisión de 5 esquemas** de agregación (mayoría/moda, media aritmética, mediana, votación ponderada y recuento de Borda), cada uno con descripción, ventajas, limitaciones y aplicabilidad a puntuaciones ordinales 1-5 emitidas por jueces de IA

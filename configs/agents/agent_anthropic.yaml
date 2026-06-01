@@ -1,0 +1,28 @@
+---
+# INDEPENDENCE GUARANTEE:
+# This agent evaluates each conversation independently.
+# It has no access to scores from other agents.
+# It has no access to human annotation scores.
+# It has no access to G-Eval scores.
+# temperature=0.0 ensures deterministic outputs given the same input.
+
+name: "judge_anthropic"
+model: "claude-haiku-4-5"
+provider: "anthropic"
+api_key_env: "ANTHROPIC_API_KEY"
+temperature: 0.0
+max_tokens: 512
+prompt_file: "configs/prompts/geval_relevance_prompt.txt"
+evaluation_dimension: "relevance"
+score_range:
+  min: 1
+  max: 5
+independence: true
+methodology_note: >
+  claude-haiku-4-5 (released October 2025) is Anthropic's efficient model
+  and completes the three-provider diversity requirement. Extended thinking
+  is intentionally not used here, to keep evaluation conditions comparable
+  with the other two judges. The relevance prompt is the V3 prompt used
+  by G-Eval, shared across the panel as a deliberate scientific control so
+  that cross-judge differences are attributable to model and provider,
+  not to prompt variation.
