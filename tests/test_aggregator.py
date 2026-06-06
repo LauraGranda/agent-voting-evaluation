@@ -6,6 +6,7 @@ plus output-structure and precision tests. Fixtures use the canonical
 judge names declared in ``configs/agents/agent_*.yaml``.
 """
 
+import math
 import sys
 from pathlib import Path
 
@@ -138,11 +139,61 @@ def test_score_out_of_range_raises() -> None:
         aggregate(out_of_range)
 
 
+# ─── 5b. Non-finite score (NaN / ±inf) ───────────────────────────────────
+@pytest.mark.parametrize(
+    "bad_value",
+    [math.nan, math.inf, -math.inf],
+    ids=["nan", "+inf", "-inf"],
+)
+def test_non_finite_score_raises(bad_value: float) -> None:
+    """NaN and infinities are rejected with a 'not finite' message naming the agent."""
+    scores = {"judge_openai": bad_value, "judge_google": 3, "judge_anthropic": 4}
+    with pytest.raises(ValueError, match=r"judge_openai.*not finite"):
+        aggregate(scores)
+
+
+# ─── 5c. Non-numeric score (defensive coercion) ──────────────────────────
+@pytest.mark.parametrize(
+    "bad_value",
+    ["abc", [1, 2, 3], complex(1, 2), object()],
+    ids=["non_numeric_string", "list", "complex", "object"],
+)
+def test_non_numeric_score_raises(bad_value: object) -> None:
+    """Inputs that cannot be coerced to a real number raise ValueError naming the agent.
+
+    Guards against runtime inputs that violate the static ``float | None``
+    type hint (config-driven runners may forward strings or other types).
+    Numeric strings such as ``"3.5"`` are still accepted by ``float()`` and
+    are NOT rejected by this branch.
+    """
+    scores: dict[str, object] = {
+        "judge_openai": bad_value,
+        "judge_google": 3,
+        "judge_anthropic": 4,
+    }
+    with pytest.raises(ValueError, match=r"judge_openai.*not a number"):
+        aggregate(scores)  # type: ignore[arg-type]
+
+
 # ─── 6. Empty input ──────────────────────────────────────────────────────
 def test_empty_input_raises() -> None:
     """An empty dict raises ValueError with the exact message from the spec."""
     with pytest.raises(ValueError, match="No agent scores provided"):
         aggregate({})
+
+
+# ─── 6b. All-None input ──────────────────────────────────────────────────
+def test_all_none_input_raises() -> None:
+    """A non-empty mapping where every value is None has no valid scores to aggregate.
+
+    The function raises the same ValueError as the empty case before
+    constructing any output dict, so no ``metadata.missing_agents`` field
+    leaks out: ``aggregate`` never returns. The ``pytest.raises`` block
+    documents that contract by asserting the call exits via exception.
+    """
+    all_none = {"judge_openai": None, "judge_google": None, "judge_anthropic": None}
+    with pytest.raises(ValueError, match="No agent scores provided"):
+        aggregate(all_none)
 
 
 # ─── 7. All minimum scores ───────────────────────────────────────────────

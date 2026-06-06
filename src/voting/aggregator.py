@@ -19,6 +19,7 @@ to the same operator.
 
 from __future__ import annotations
 
+import math
 import statistics
 from collections.abc import Mapping
 from typing import Any, Final
@@ -29,12 +30,6 @@ SCORE_MIN: Final[int] = 1
 SCORE_MAX: Final[int] = 5
 AGREEMENT_HIGH_THRESHOLD: Final[float] = 0.5
 AGREEMENT_MEDIUM_THRESHOLD: Final[float] = 1.0
-
-# Maximum standard deviation theoretically achievable on the 1-5 scale,
-# used as the denominator of the continuous agreement measure from
-# docs/voting_scheme_analysis.md §4 (1 - std/std_max). Half the range is
-# the dispersion of votes concentrated at the two extremes (e.g. {1, 5}).
-_STD_MAX: Final[float] = (SCORE_MAX - SCORE_MIN) / 2.0
 
 # Number of decimals every continuous score in the output is rounded to.
 _SCORE_DECIMALS: Final[int] = 2
@@ -87,9 +82,11 @@ def aggregate(scores: Mapping[str, float | None]) -> dict[str, Any]:
     ------
     ValueError
         If ``scores`` is empty, if it contains only ``None`` values
-        (no valid score to aggregate), or if any non-``None`` score is
-        outside [SCORE_MIN, SCORE_MAX]. The message identifies the
-        offending agent when applicable.
+        (no valid score to aggregate), if any non-``None`` score cannot
+        be coerced to a real number, if any non-``None`` score is
+        non-finite (NaN or ±inf), or if any non-``None`` score is outside
+        [SCORE_MIN, SCORE_MAX]. The message identifies the offending
+        agent when applicable.
     """
     valid_scores, missing_agents = validate_scores(scores)
     values: list[float] = list(valid_scores.values())
@@ -147,8 +144,10 @@ def validate_scores(
     Raises
     ------
     ValueError
-        If the input is empty, or contains only ``None`` values, or has
-        an out-of-range score.
+        If the input is empty, if it contains only ``None`` values, if any
+        score cannot be coerced to a real number, if any score is non-finite
+        (NaN or ±inf), or if any score is out of the closed interval
+        [SCORE_MIN, SCORE_MAX]. The message identifies the offending agent.
     """
     if not scores:
         raise ValueError("No agent scores provided")
@@ -159,11 +158,25 @@ def validate_scores(
         if value is None:
             missing_agents.append(name)
             continue
-        if value < SCORE_MIN or value > SCORE_MAX:
+        # Runtime input isn't guaranteed to match the static type hints (the
+        # function may be reached from a config-driven runner). Coerce to
+        # float first so the downstream finiteness and range checks operate
+        # on a guaranteed real number; if coercion fails the agent name is
+        # surfaced in the error message instead of a bare TypeError.
+        try:
+            coerced = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Score for agent '{name}' is not a number ({value!r})") from exc
+        # NaN and ±inf would slip past the range check below because every
+        # numeric comparison with NaN is False, so reject them up-front with
+        # a clear message before any downstream statistics call sees them.
+        if not math.isfinite(coerced):
+            raise ValueError(f"Score for agent '{name}' is not finite ({coerced!r})")
+        if coerced < SCORE_MIN or coerced > SCORE_MAX:
             raise ValueError(
-                f"Score for agent '{name}' is {value}, must be in [{SCORE_MIN}, {SCORE_MAX}]"
+                f"Score for agent '{name}' is {coerced}, must be in [{SCORE_MIN}, {SCORE_MAX}]"
             )
-        cleaned[name] = float(value)
+        cleaned[name] = coerced
 
     if not cleaned:
         raise ValueError("No agent scores provided")
@@ -219,15 +232,32 @@ def _stdev(values: list[float]) -> float:
     return round(float(statistics.stdev(values)), _SCORE_DECIMALS + 2)
 
 
+def _std_max(n: int) -> float:
+    """Maximum sample standard deviation attainable for ``n`` votes in [SCORE_MIN, SCORE_MAX].
+
+    With ``statistics.stdev`` (sample, Bessel-corrected), the dispersion is
+    maximized when the votes split evenly at the two extremes of the score
+    range, which yields ``(R / 2) * sqrt(n / (n - 1))`` where ``R`` is the
+    range. This is the tight bound for even ``n``; for odd ``n`` it is a
+    very tight upper bound that keeps ``1 - std / std_max`` inside [0, 1].
+    Using a denominator that depends on ``n`` is necessary because the
+    range-based constant ``R / 2`` under-estimates the achievable sample
+    stdev and would push the continuous agreement below zero.
+    """
+    return (SCORE_MAX - SCORE_MIN) / 2.0 * math.sqrt(n / (n - 1))
+
+
 def _agreement_continuous(values: list[float], std_dev: float) -> float | None:
-    """Continuous agreement measure ``1 - std/std_max`` clamped to [0, 1].
+    """Continuous agreement measure ``1 - std / std_max(n)`` clamped to [0, 1].
 
     Returns ``None`` when fewer than two valid scores are available, in
-    which case the measure is not defined. The clamp guards against
-    rounding edge cases where ``std_dev`` exceeds ``_STD_MAX``.
+    which case the measure is not defined. The denominator is sized to the
+    sample stdev definition used in ``compute_agreement`` (see
+    :func:`_std_max`), so the clamp is only a defensive safeguard against
+    floating-point edges and never fires in practice for valid inputs.
     """
     if len(values) < _MIN_FOR_AGREEMENT:
         return None
-    raw = 1.0 - std_dev / _STD_MAX
+    raw = 1.0 - std_dev / _std_max(len(values))
     bounded = max(0.0, min(1.0, raw))
     return round(bounded, _SCORE_DECIMALS + 2)
