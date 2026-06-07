@@ -1,0 +1,442 @@
+[
+  {
+    "conversation_id": "conv_97_ground-truth",
+    "human_score": 5,
+    "model": "ground-truth",
+    "stratum": 1,
+    "individual_scores": {
+      "judge_openai": 5,
+      "judge_google": 5,
+      "judge_anthropic": 5
+    },
+    "vote_final": 5.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 5.0,
+      "max_score": 5.0,
+      "median_score": 5.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_94_ground-truth",
+    "human_score": 5,
+    "model": "ground-truth",
+    "stratum": 1,
+    "individual_scores": {
+      "judge_openai": 5,
+      "judge_google": 5,
+      "judge_anthropic": 5
+    },
+    "vote_final": 5.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 5.0,
+      "max_score": 5.0,
+      "median_score": 5.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_91_ground-truth",
+    "human_score": 5,
+    "model": "ground-truth",
+    "stratum": 1,
+    "individual_scores": {
+      "judge_openai": 5,
+      "judge_google": 5,
+      "judge_anthropic": 5
+    },
+    "vote_final": 5.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 5.0,
+      "max_score": 5.0,
+      "median_score": 5.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_8_ground-truth",
+    "human_score": 5,
+    "model": "ground-truth",
+    "stratum": 1,
+    "individual_scores": {
+      "judge_openai": 5,
+      "judge_google": 5,
+      "judge_anthropic": 5
+    },
+    "vote_final": 5.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 5.0,
+      "max_score": 5.0,
+      "median_score": 5.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_1_negative-sample",
+    "human_score": 1,
+    "model": "negative-sample",
+    "stratum": 2,
+    "individual_scores": {
+      "judge_openai": 1,
+      "judge_google": 1,
+      "judge_anthropic": 1
+    },
+    "vote_final": 1.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 1.0,
+      "max_score": 1.0,
+      "median_score": 1.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_22_negative-sample",
+    "human_score": 1,
+    "model": "negative-sample",
+    "stratum": 2,
+    "individual_scores": {
+      "judge_openai": 1,
+      "judge_google": 1,
+      "judge_anthropic": 1
+    },
+    "vote_final": 1.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 1.0,
+      "max_score": 1.0,
+      "median_score": 1.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_28_negative-sample",
+    "human_score": 1,
+    "model": "negative-sample",
+    "stratum": 2,
+    "individual_scores": {
+      "judge_openai": 1,
+      "judge_google": 1,
+      "judge_anthropic": 1
+    },
+    "vote_final": 1.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 1.0,
+      "max_score": 1.0,
+      "median_score": 1.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_36_negative-sample",
+    "human_score": 1,
+    "model": "negative-sample",
+    "stratum": 2,
+    "individual_scores": {
+      "judge_openai": 1,
+      "judge_google": 1,
+      "judge_anthropic": 1
+    },
+    "vote_final": 1.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 1.0,
+      "max_score": 1.0,
+      "median_score": 1.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_30_GPT2_small top_temp1.0_k0_p0.9",
+    "human_score": 4.75,
+    "model": "GPT2_small top_temp1.0_k0_p0.9",
+    "stratum": 3,
+    "individual_scores": {
+      "judge_openai": 1,
+      "judge_google": 1,
+      "judge_anthropic": 2
+    },
+    "vote_final": 1.33,
+    "agreement_level": "medium",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.5774,
+      "min_score": 1.0,
+      "max_score": 2.0,
+      "median_score": 1.0,
+      "agreement_continuous": 0.7643
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_14_S2S_attn greedy_temp1.0_k0_p0.0",
+    "human_score": 4.75,
+    "model": "S2S_attn greedy_temp1.0_k0_p0.0",
+    "stratum": 3,
+    "individual_scores": {
+      "judge_openai": 5,
+      "judge_google": 5,
+      "judge_anthropic": 5
+    },
+    "vote_final": 5.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 5.0,
+      "max_score": 5.0,
+      "median_score": 5.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_41_HRED_attn greedy_temp1.0_k0_p0.0",
+    "human_score": 4,
+    "model": "HRED_attn greedy_temp1.0_k0_p0.0",
+    "stratum": 3,
+    "individual_scores": {
+      "judge_openai": 5,
+      "judge_google": 5,
+      "judge_anthropic": 5
+    },
+    "vote_final": 5.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 5.0,
+      "max_score": 5.0,
+      "median_score": 5.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_51_VHRED_attn sample_temp1.0_k0_p0.0",
+    "human_score": 4,
+    "model": "VHRED_attn sample_temp1.0_k0_p0.0",
+    "stratum": 3,
+    "individual_scores": {
+      "judge_openai": 3,
+      "judge_google": 3,
+      "judge_anthropic": 3
+    },
+    "vote_final": 3.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 3.0,
+      "max_score": 3.0,
+      "median_score": 3.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_31_GPT2_medium top_temp1.0_k0_p0.5",
+    "human_score": 3.25,
+    "model": "GPT2_medium top_temp1.0_k0_p0.5",
+    "stratum": 4,
+    "individual_scores": {
+      "judge_openai": 3,
+      "judge_google": 3,
+      "judge_anthropic": 3
+    },
+    "vote_final": 3.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 3.0,
+      "max_score": 3.0,
+      "median_score": 3.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_28_S2S_attn sample_temp1.0_k0_p0.0",
+    "human_score": 3.5,
+    "model": "S2S_attn sample_temp1.0_k0_p0.0",
+    "stratum": 4,
+    "individual_scores": {
+      "judge_openai": 3,
+      "judge_google": 4,
+      "judge_anthropic": 3
+    },
+    "vote_final": 3.33,
+    "agreement_level": "medium",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.5774,
+      "min_score": 3.0,
+      "max_score": 4.0,
+      "median_score": 3.0,
+      "agreement_continuous": 0.7643
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_20_HRED_attn greedy_temp1.0_k0_p0.0",
+    "human_score": 2.5,
+    "model": "HRED_attn greedy_temp1.0_k0_p0.0",
+    "stratum": 4,
+    "individual_scores": {
+      "judge_openai": 3,
+      "judge_google": 5,
+      "judge_anthropic": 2
+    },
+    "vote_final": 3.33,
+    "agreement_level": "low",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 1.5275,
+      "min_score": 2.0,
+      "max_score": 5.0,
+      "median_score": 3.0,
+      "agreement_continuous": 0.3764
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_24_VHRED_attn greedy_temp1.0_k0_p0.0",
+    "human_score": 3.5,
+    "model": "VHRED_attn greedy_temp1.0_k0_p0.0",
+    "stratum": 4,
+    "individual_scores": {
+      "judge_openai": 2,
+      "judge_google": 3,
+      "judge_anthropic": 3
+    },
+    "vote_final": 2.67,
+    "agreement_level": "medium",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.5774,
+      "min_score": 2.0,
+      "max_score": 3.0,
+      "median_score": 3.0,
+      "agreement_continuous": 0.7643
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_67_GPT2_medium greedy_temp1.0_k0_p0.0",
+    "human_score": 1.75,
+    "model": "GPT2_medium greedy_temp1.0_k0_p0.0",
+    "stratum": 5,
+    "individual_scores": {
+      "judge_openai": 1,
+      "judge_google": 2,
+      "judge_anthropic": 2
+    },
+    "vote_final": 1.67,
+    "agreement_level": "medium",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.5774,
+      "min_score": 1.0,
+      "max_score": 2.0,
+      "median_score": 2.0,
+      "agreement_continuous": 0.7643
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_86_S2S sample_temp1.0_k0_p0.0",
+    "human_score": 1,
+    "model": "S2S sample_temp1.0_k0_p0.0",
+    "stratum": 5,
+    "individual_scores": {
+      "judge_openai": 1,
+      "judge_google": 1,
+      "judge_anthropic": 1
+    },
+    "vote_final": 1.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 1.0,
+      "max_score": 1.0,
+      "median_score": 1.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_26_HRED_attn sample_temp1.0_k0_p0.0",
+    "human_score": 2,
+    "model": "HRED_attn sample_temp1.0_k0_p0.0",
+    "stratum": 5,
+    "individual_scores": {
+      "judge_openai": 1,
+      "judge_google": 3,
+      "judge_anthropic": 2
+    },
+    "vote_final": 2.0,
+    "agreement_level": "medium",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 1.0,
+      "min_score": 1.0,
+      "max_score": 3.0,
+      "median_score": 2.0,
+      "agreement_continuous": 0.5918
+    },
+    "aggregate_failed": false
+  },
+  {
+    "conversation_id": "conv_18_VHRED_attn sample_temp1.0_k0_p0.0",
+    "human_score": 1.25,
+    "model": "VHRED_attn sample_temp1.0_k0_p0.0",
+    "stratum": 5,
+    "individual_scores": {
+      "judge_openai": 1,
+      "judge_google": 1,
+      "judge_anthropic": 1
+    },
+    "vote_final": 1.0,
+    "agreement_level": "high",
+    "metadata": {
+      "n_agents": 3,
+      "std_deviation": 0.0,
+      "min_score": 1.0,
+      "max_score": 1.0,
+      "median_score": 1.0,
+      "agreement_continuous": 1.0
+    },
+    "aggregate_failed": false
+  }
+]
