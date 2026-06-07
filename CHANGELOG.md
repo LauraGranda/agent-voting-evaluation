@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sistema de Votación — Pilot end-to-end sobre 20 conversaciones (HU-08)** - Ejecución del pipeline completo del panel sobre las 20 entradas de `configs/prompts/pilot_sample.json` con decisión **go/no-go** documentada para el run completo:
+    - `scripts/run_judge.py` - Runner reutilizable de un solo juez (`call_agent`) con dispatch por proveedor (OpenAI, Google vía la nueva SDK `google-genai`, Anthropic). Constantes `Final[]` con tarifas list price por proveedor (siguiendo el patrón de `scripts/run_geval.py`). Estrategia de parsing del SCORE acordada con la usuaria: regex permisivo `(?:SCORE|Score|score)\s*[=:]\s*([1-5])` en el primer intento más una sola reejecución con sufijo de formato si falla, manteniendo el V3 íntegro en la primera llamada como exige el control científico de HU-06. Para Gemini 2.5 Flash se pasa `thinking_config.thinking_budget=0`, en cumplimiento de la decisión cerrada en `docs/agent_panel_design.md` §4.2.
+    - `notebooks/03_voting_pilot.ipynb` - Notebook generado con `nbformat`, 14 celdas (título, setup, configs, una corrida por agente, agregación con `aggregate()` de HU-07, join con G-Eval, tabla comparativa, degenerate agent check, Spearman, costo, review manual, decisión).
+    - **Dependencia nueva**: `google-genai>=2.8.0` añadida con `uv add`.
+    - **Pre-flight checks 1-6**: imports, API keys, sample, prompt V3 compartido por los tres YAML, agregador, una llamada real a Gemini ($0.00068).
+    - **Resultados del pilot (n=20)**:
+        - **60/60 llamadas exitosas** (20 por agente, sin fallos de parsing; el regex permisivo capturó el formato natural `Score = N` del V3 sin disparar el retry de formato).
+        - **Sin jueces degenerados**: std de `judge_openai` 1.76, `judge_google` 1.75, `judge_anthropic` 1.64 (todos > 0.3).
+        - **Spearman ρ contra `human_score`**: `judge_anthropic` 0.927, G-Eval (gpt-4o) 0.902, **voting_final 0.892**, `judge_openai` 0.846, `judge_google` 0.802. El voting iguala el techo de G-Eval con n=20.
+        - **Distribución del agreement_level**: 14 `high`, 5 `medium`, 1 `low`.
+        - **Costo real del pilot**: $0.1742 (OpenAI $0.0947, Anthropic $0.0641, Google $0.0154). Proyectado para 900 pares: **$7.84**, cerca de la estimación de HU-06 ($7.61).
+    - **Persistencia**: `outputs/agent_scores/pilot_agent_{openai,google,anthropic}.json` (20 dicts por archivo) más `outputs/voting_pilot_results.json` (20 dicts con `vote_final`, `agreement_level`, `agreement_continuous`, `median_score` y `individual_scores`).
+    - **Decisión: PROCEED**. Pipeline validado end-to-end, sin degeneraciones, ρ del voting competitiva con G-Eval, costo proyectado dentro del rango. Próximo paso: `scripts/run_voting_system.py` reusando `call_agent` con paralelismo entre proveedores y reintentos con `tenacity`.
+    - **Observación no bloqueante**: `judge_anthropic` individual supera al voting agregado en este pilot (ρ 0.927 vs 0.892); a contrastar con n=900 antes de declarar que el voting domina al mejor juez individual.
+
 - **Sistema de Votación — Módulo agregador `src/voting/aggregator.py` (HU-07)** - Implementación pura de la lógica de agregación de puntuaciones de los jueces del panel, sin llamadas a APIs ni dependencias pesadas:
     - `src/voting/__init__.py` - Reexporta la API pública (`aggregate`, `SCHEME_NAME`).
     - `src/voting/aggregator.py` - Cuatro funciones con docstrings tipo NumPy/Google y constantes a nivel de módulo con `Final[]` siguiendo el patrón de `scripts/run_geval.py`:
