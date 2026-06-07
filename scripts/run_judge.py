@@ -20,7 +20,9 @@ from __future__ import annotations
 
 import os
 import re
+from collections.abc import Callable
 from datetime import UTC, datetime
+from functools import cache
 from pathlib import Path
 from typing import Any, Final
 
@@ -48,6 +50,19 @@ _FORMAT_SUFFIX: Final[str] = "\n\nEnd your response with: SCORE: <integer 1-5>"
 
 
 # ─── Prompt assembly and parsing (pure helpers) ─────────────────────────
+@cache
+def _load_prompt(prompt_file: str) -> str:
+    """Read the prompt template from disk once and cache it for subsequent calls.
+
+    The full panel run will invoke :func:`call_agent` ~2700 times (900 pairs
+    times 3 judges), all pointing to the same V3 prompt. Reading the file on
+    every invocation adds non-trivial disk I/O for no gain; the prompt is
+    part of the repo and never changes mid-run, so an unbounded function
+    cache keyed by the file path string is safe.
+    """
+    return Path(prompt_file).read_text(encoding="utf-8")
+
+
 def _build_full_prompt(
     prompt_text: str,
     conversation_input: str,
@@ -62,9 +77,17 @@ def _build_full_prompt(
 
 
 def _parse_score(response_text: str) -> int | None:
-    """Extract the first 1-5 integer that follows a ``SCORE:`` or ``Score =`` token."""
-    match = _SCORE_RE.search(response_text)
-    return int(match.group(1)) if match else None
+    """Extract the model's final 1-5 score from the response text.
+
+    The V3 prompt anchors three worked examples ending in ``Score = N.``,
+    so a model that quotes or paraphrases the rubric mid-reasoning can
+    leave several score-like tokens in its output. The verdict is always
+    the **last** one (the conclusion follows after any reference to the
+    anchoring examples), so we pick the last match rather than the first.
+    Returns ``None`` when no token in ``[1, 5]`` is found at all.
+    """
+    matches = _SCORE_RE.findall(response_text)
+    return int(matches[-1]) if matches else None
 
 
 def _compute_cost(model: str, tokens_in: int, tokens_out: int) -> float:
@@ -73,12 +96,36 @@ def _compute_cost(model: str, tokens_in: int, tokens_out: int) -> float:
     return tokens_in / 1_000_000 * price["input"] + tokens_out / 1_000_000 * price["output"]
 
 
+# ─── Cached SDK clients ─────────────────────────────────────────────────
+# A fresh client per call would re-do TLS, auth and connection-pool setup
+# 2700 times during the full 900-pair run, and even more when the runner
+# adds parallelism. ``functools.cache`` keyed by the API key keeps one
+# client per credential alive for the lifetime of the process, so threads
+# share the same connection pool.
+@cache
+def _openai_client(api_key: str) -> OpenAI:
+    """Return a process-wide singleton OpenAI client for ``api_key``."""
+    return OpenAI(api_key=api_key)
+
+
+@cache
+def _google_client(api_key: str) -> genai.Client:
+    """Return a process-wide singleton Google client for ``api_key``."""
+    return genai.Client(api_key=api_key)
+
+
+@cache
+def _anthropic_client(api_key: str) -> Anthropic:
+    """Return a process-wide singleton Anthropic client for ``api_key``."""
+    return Anthropic(api_key=api_key)
+
+
 # ─── Provider-specific call wrappers ────────────────────────────────────
 def _call_openai(
     model: str, prompt: str, temperature: float, max_tokens: int, api_key: str
 ) -> tuple[str, int, int]:
     """Issue one chat-completion call to OpenAI; return (text, in_tokens, out_tokens)."""
-    client = OpenAI(api_key=api_key)
+    client = _openai_client(api_key)
     response = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
@@ -102,7 +149,7 @@ def _call_google(
     not use extended reasoning so it stays directly comparable with the
     other two judges (which do not have a thinking mode at all).
     """
-    client = genai.Client(api_key=api_key)
+    client = _google_client(api_key)
     response = client.models.generate_content(
         model=model,
         contents=prompt,
@@ -125,7 +172,7 @@ def _call_anthropic(
     model: str, prompt: str, temperature: float, max_tokens: int, api_key: str
 ) -> tuple[str, int, int]:
     """Issue one messages.create call to Anthropic; return (text, in_tokens, out_tokens)."""
-    client = Anthropic(api_key=api_key)
+    client = _anthropic_client(api_key)
     response = client.messages.create(
         model=model,
         max_tokens=max_tokens,
@@ -137,10 +184,23 @@ def _call_anthropic(
     # block has no ``text`` attribute (defensive only).
     first_block = response.content[0] if response.content else None
     text = getattr(first_block, "text", "") or ""
-    return text, response.usage.input_tokens, response.usage.output_tokens
+    # Mirror the OpenAI/Google wrappers: if the SDK ever returns a
+    # response without usage metadata (partial response, future schema
+    # change), fall back to zero so cost reporting degrades gracefully
+    # instead of raising an AttributeError mid-pilot.
+    usage = response.usage
+    if usage is None:
+        return text, 0, 0
+    return text, usage.input_tokens, usage.output_tokens
 
 
-_CALLERS: Final[dict[str, Any]] = {
+# Each caller takes (model, prompt, temperature, max_tokens, api_key) and
+# returns (text, tokens_in, tokens_out). Typing the registry with the exact
+# Callable shape (instead of `Any`) lets mypy reject any future provider
+# implementation whose signature drifts from this contract.
+_CallerFn = Callable[[str, str, float, int, str], tuple[str, int, int]]
+
+_CALLERS: Final[dict[str, _CallerFn]] = {
     "openai": _call_openai,
     "google": _call_google,
     "anthropic": _call_anthropic,
@@ -169,8 +229,11 @@ def call_agent(
         Required fields: ``name``, ``model``, ``provider``, ``api_key_env``,
         ``temperature``, ``max_tokens``, ``prompt_file``.
     conversation_input
-        Conversation history already formatted as
-        ``[Turn N] User|Assistant: ...`` lines, joined by newlines.
+        Conversation history already formatted as one line per turn,
+        ``[Turn N] User: ...`` for user turns and ``[Turn N] Assistant: ...``
+        for assistant turns, joined by newlines. The notebook produces
+        exactly this format from ``entry["turns"][:-1]``; the final
+        assistant turn (which equals ``actual_output``) is excluded.
     actual_output
         The response under evaluation, exactly as it appears in the
         dataset.
@@ -205,7 +268,7 @@ def call_agent(
     if not api_key:
         raise RuntimeError(f"API key {agent_config['api_key_env']} not set in environment")
 
-    prompt_text = Path(agent_config["prompt_file"]).read_text(encoding="utf-8")
+    prompt_text = _load_prompt(agent_config["prompt_file"])
     full_prompt = _build_full_prompt(prompt_text, conversation_input, actual_output)
 
     caller = _CALLERS[provider]
