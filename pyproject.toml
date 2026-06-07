@@ -11,6 +11,7 @@ readme = "README.md"
 dependencies = [
     "anthropic>=0.89.0",
     "deepeval>=3.9.5",
+    "google-genai>=2.8.0",
     "matplotlib>=3.10.8",
     "openai>=2.30.0",
     "pandas>=3.0.2",
