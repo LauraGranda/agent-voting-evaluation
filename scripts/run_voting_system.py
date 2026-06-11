@@ -7,13 +7,17 @@ Orchestrates 900 conversation-response pairs through the three-judge panel
 :func:`scripts.run_judge.call_agent`; this module only adds checkpointing,
 retries on transient SDK errors, dual logging, and summary stats.
 
-The full run consumes ~$7.61 USD across the three providers and ~60-90
-minutes wall time. The script is **resumable** by ``conversation_id``:
-re-running after a crash starts from the first pending pair, not from zero.
+The full run is on the order of a few USD of API spend across the three
+providers and roughly an hour or two of sequential wall time; the exact
+cost, token counts and wall time of the latest run live in
+``CHANGELOG.md`` and ``outputs/voting_summary_stats.md`` so this docstring
+does not drift as prices, providers or dataset size change. The script is
+**resumable** by ``conversation_id``: re-running after a crash starts from
+the first pending pair, not from zero.
 
 Usage:
     uv run python scripts/run_voting_system.py                 # full 900-pair run
-    uv run python scripts/run_voting_system.py --limit 5       # smoke test (~$0.04)
+    uv run python scripts/run_voting_system.py --limit 5       # smoke test
 
 Outputs (under ``outputs/``):
     - voting_results.json                      per-pair aggregated scores
@@ -238,10 +242,15 @@ def call_agent_with_retry(
     """Call :func:`call_agent` with exponential backoff on transient errors.
 
     ``call_agent`` already handles parse-failure retries inside the prompt
-    flow; this wrapper handles **SDK exceptions** (rate limits, timeouts,
-    transient 5xx). If all retries are exhausted the exception is caught
-    and a failure-shaped dict is returned so the par-loop can keep going.
+    flow (annotated as ``retry_used`` in its return dict); this wrapper
+    handles **SDK exceptions** (rate limits, timeouts, transient 5xx) and
+    annotates the result with ``sdk_attempts`` — the number of times the
+    SDK call was actually issued (1 on first-try success, up to
+    ``RETRY_MAX_ATTEMPTS`` when tenacity retried). If all retries are
+    exhausted the exception is caught and a failure-shaped dict is returned
+    so the par-loop can keep going.
     """
+    sdk_attempts = 0
     try:
         for attempt in Retrying(
             retry=retry_if_exception_type(RETRYABLE_EXCEPTIONS),
@@ -251,7 +260,10 @@ def call_agent_with_retry(
             reraise=True,
         ):
             with attempt:
-                return call_agent(agent_config, conversation_input, actual_output)
+                sdk_attempts = attempt.retry_state.attempt_number
+                result = call_agent(agent_config, conversation_input, actual_output)
+                result["sdk_attempts"] = sdk_attempts
+                return result
     except FATAL_EXCEPTIONS:
         raise
     except (RetryError, *RETRYABLE_EXCEPTIONS) as exc:
@@ -265,7 +277,7 @@ def call_agent_with_retry(
             "tokens_out": 0,
             "cost_usd": 0.0,
             "timestamp": datetime.now(UTC).isoformat(),
-            "retry_used": False,
+            "sdk_attempts": sdk_attempts or RETRY_MAX_ATTEMPTS,
             "error": f"api_failure: {type(exc).__name__}: {exc}",
         }
     # The Retrying loop always either returns from inside the with-block or
@@ -364,6 +376,7 @@ def evaluate_dataset(
     """
     results_path = output_dir / "voting_results.json"
     summary_path = output_dir / "voting_summary_stats.md"
+    geval_results_path = output_dir / "geval_results.json"
     agent_scores_dir = output_dir / "agent_scores"
     per_agent_paths = {
         name: agent_scores_dir / f"full_agent_{name.removeprefix('judge_')}.json"
@@ -427,7 +440,13 @@ def evaluate_dataset(
 
             if idx % CHECKPOINT_EVERY == 0:
                 _persist_partial(
-                    results, per_agent_rows, results_path, per_agent_paths, summary_path, dataset
+                    results,
+                    per_agent_rows,
+                    results_path,
+                    per_agent_paths,
+                    summary_path,
+                    dataset,
+                    geval_results_path,
                 )
                 logger.info("Checkpoint + outputs saved at %d/%d", idx, total)
 
@@ -435,7 +454,13 @@ def evaluate_dataset(
                 time.sleep(sleep_s)
     finally:
         _persist_partial(
-            results, per_agent_rows, results_path, per_agent_paths, summary_path, dataset
+            results,
+            per_agent_rows,
+            results_path,
+            per_agent_paths,
+            summary_path,
+            dataset,
+            geval_results_path,
         )
 
     elapsed = perf_counter() - t0
@@ -450,13 +475,19 @@ def _persist_partial(  # noqa: PLR0913
     per_agent_paths: dict[str, Path],
     summary_path: Path,
     dataset: list[dict[str, Any]],
+    geval_results_path: Path,
 ) -> None:
     """Atomically write voting_results.json + full_agent_*.json + summary.md."""
     try:
         _write_atomic(results, results_path)
         for name, rows in per_agent_rows.items():
             _write_atomic(rows, per_agent_paths[name])
-        generate_summary_stats(results, summary_path, dataset=dataset)
+        generate_summary_stats(
+            results,
+            summary_path,
+            dataset=dataset,
+            geval_results_path=geval_results_path,
+        )
     except OSError:
         logger.exception("Failed to persist partial results")
 
@@ -504,7 +535,13 @@ def _model_family(model_name: str) -> str:
     return "other"
 
 
-def _basic_stats(values: Iterable[float]) -> dict[str, float]:
+def _basic_stats(values: Iterable[float]) -> dict[str, int | float]:
+    """Return n + mean/median/std/min/max for ``values``.
+
+    ``n`` is an ``int`` (count); the other fields are floats. The union
+    return type reflects that mix so downstream consumers and mypy don't
+    have to coerce when they want an integer count.
+    """
     vals = [float(v) for v in values]
     if not vals:
         return {"n": 0, "mean": 0.0, "median": 0.0, "std": 0.0, "min": 0.0, "max": 0.0}
@@ -525,12 +562,17 @@ def _spearman_or_nan(xs: list[float], ys: list[float]) -> tuple[float, float, in
     return float(rho), float(p), len(xs)
 
 
-def _load_geval_rho() -> tuple[float, int] | None:
-    """Return (rho, n) of G-Eval vs human from outputs/geval_results.json, or None."""
-    if not GEVAL_RESULTS_PATH.exists():
+def _load_geval_rho(geval_results_path: Path) -> tuple[float, int] | None:
+    """Return (rho, n) of G-Eval vs human from ``geval_results_path``, or None.
+
+    The path is parameterised so a run with a custom ``--output-dir`` compares
+    against the G-Eval baseline that lives in the same output tree, not the
+    default one in the project root.
+    """
+    if not geval_results_path.exists():
         return None
     try:
-        with open(GEVAL_RESULTS_PATH, encoding="utf-8") as f:
+        with open(geval_results_path, encoding="utf-8") as f:
             data: list[dict[str, Any]] = json.load(f)
     except (json.JSONDecodeError, OSError):
         return None
@@ -548,6 +590,7 @@ def _load_geval_rho() -> tuple[float, int] | None:
 def compute_summary(  # noqa: C901
     results: list[dict[str, Any]],
     dataset: list[dict[str, Any]] | None = None,
+    geval_results_path: Path | None = None,
 ) -> dict[str, Any]:
     """Compute descriptive stats — pure, no I/O."""
     ok = [r for r in results if not r.get("aggregate_failed", False)]
@@ -576,7 +619,7 @@ def compute_summary(  # noqa: C901
         rho_j, p_j, n_j = _spearman_or_nan(xs, ys)
         per_judge_rho[name] = {"rho": rho_j, "p": p_j, "n": n_j}
 
-    by_family: dict[str, dict[str, float]] = {}
+    by_family: dict[str, dict[str, int | float]] = {}
     if dataset is not None:
         id_to_model = {e["metadata"]["conversation_id"]: e["metadata"]["model"] for e in dataset}
         family_scores: dict[str, list[float]] = {}
@@ -614,7 +657,9 @@ def compute_summary(  # noqa: C901
         "per_judge": per_judge_rho,
         "by_family": by_family,
         "agreement_counts": agreement_counts,
-        "geval_reference": _load_geval_rho(),
+        "geval_reference": (
+            _load_geval_rho(geval_results_path) if geval_results_path is not None else None
+        ),
         "failed_entries": [
             {
                 "conversation_id": r["conversation_id"],
@@ -665,7 +710,7 @@ def _render_completion_table(s: dict[str, Any]) -> list[str]:
     return lines
 
 
-def _render_distribution_table(overall: dict[str, float]) -> list[str]:
+def _render_distribution_table(overall: dict[str, int | float]) -> list[str]:
     lines = [
         "## final_vote_score distribution (1-5)\n",
         "| Stat | Value |",
@@ -695,7 +740,7 @@ def _render_spearman_table(s: dict[str, Any]) -> list[str]:
     return lines
 
 
-def _render_family_table(by_family: dict[str, dict[str, float]]) -> list[str]:
+def _render_family_table(by_family: dict[str, dict[str, int | float]]) -> list[str]:
     lines = [
         "## Breakdown by model family\n",
         "| Family | n | mean | median | std | min | max |",
@@ -744,10 +789,17 @@ def generate_summary_stats(
     out_path: Path,
     *,
     dataset: list[dict[str, Any]] | None = None,
+    geval_results_path: Path | None = None,
 ) -> None:
-    """Compute and render summary stats to ``out_path``."""
+    """Compute and render summary stats to ``out_path``.
+
+    ``geval_results_path`` should point at the G-Eval baseline JSON inside
+    the same output tree as ``out_path``; callers pass it explicitly so a
+    custom ``--output-dir`` never silently compares against a stale baseline
+    from a different run.
+    """
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    summary = compute_summary(results, dataset)
+    summary = compute_summary(results, dataset, geval_results_path)
     out_path.write_text(render_summary_markdown(summary), encoding="utf-8")
 
 
