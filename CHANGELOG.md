@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Análisis descriptivo G-Eval vs Voting vs Human sobre 900 pares (HU-10)** - Notebook que cierra el bloque comparativo descriptivo, sin llamadas a APIs (lee solo `outputs/voting_results.json`, `outputs/geval_results.json`, `data/raw/dailydialog_zhao/dataset.json`):
+    - `notebooks/04_descriptive_analysis.ipynb` - 15 celdas ejecutadas end-to-end con 900/900 entradas alineadas por `conversation_id`, 0 excluidas por scores faltantes.
+    - **Estrato derivado en el propio notebook** (1=ground-truth, 2=negative-sample, 3=AI h≥4, 4=2.5–3.5, 5=h≤2) porque `voting_results.json.stratum` quedó en `null` durante HU-09 (el runner leyó del nivel equivocado del JSON procesado; no afecta a este análisis, pero sí se debe corregir en una HU futura del runner).
+    - **Cohen's κ ponderado implementado manualmente** con NumPy (no se añade `scikit-learn` solo para una función); `krippendorff>=0.8.2` añadido vía `uv add` para Krippendorff α ordinal.
+    - **4 figuras 150 dpi** a `outputs/figures/` (renumeradas a 10–13 para no pisar las 06–09 del análisis G-Eval HU-04): `10_histograms_comparison.png`, `11_boxplots_comparison.png`, `12_concordance_heatmap.png`, `13_scatter_human_vs_methods.png`.
+    - **Summary table persistida** en `outputs/descriptive_analysis_summary.md` con descriptivos (12 métricas × 6 fuentes), Spearman ρ vs humano, κ ponderado, Krippendorff α y tasa de acuerdo exacto (|Δ|≤0.5).
+    - **Resultados clave (n=900, headline metric-dependent)**:
+        - **Spearman ρ vs humano**: G-Eval `0.756` > Voting `0.744` > judge_openai `0.713` > judge_anthropic `0.694` > judge_google `0.678`. Voting supera a todos los jueces individuales por 3.1–6.6 puntos (efecto wisdom-of-crowds), queda 0.012 por debajo de G-Eval (rango plausible de ruido — pendiente bootstrap pareado).
+        - **Weighted Cohen's κ vs humano**: **Voting `0.643` (substantial) > G-Eval `0.525` (moderate)** — el voting cruza el umbral Landis–Koch en categorical agreement.
+        - **Krippendorff α (3 raters, ordinal)**: `0.632` (substantial).
+        - **Exact agreement (|Δ|≤0.5)**: **Voting 44.3% > G-Eval 35.9%** — voting domina por +8.4 pp.
+        - **Estrato 3 (IA alta relevancia, n=216)**: confirmado como el más difícil para ambos (ρ_G=0.27, ρ_V=0.22), pero voting reduce el MAE en **40%** vs G-Eval (0.770 vs 1.286).
+    - **Sección interpretativa** de 1.043 palabras en prosa académica (Cell 14) cubriendo distribución, correlación, agreement, estrato, agentes individuales e implicaciones para la tesis. El hallazgo central documentado: la respuesta a "¿voting ≥ G-Eval?" **depende de la métrica** — Spearman favorece G-Eval marginalmente, κ/α/exact-agreement favorecen voting sustancialmente.
+    - **Field-name reconciliation con la spec**: `human_relevance_score` (dataset crudo, no `human_score`), `final_vote_score` (no `vote_score`).
+
 - **Sistema de Votación — Runner completo sobre 900 pares (HU-09)** - Escala el pipeline del panel (validado en pilot HU-08) al dataset completo, produciendo los outputs que la HU posterior usará para el análisis comparativo formal contra G-Eval:
     - `scripts/run_voting_system.py` - Orquesta 2.700 llamadas reales (900 pares × 3 jueces) reusando `call_agent` de `scripts/run_judge.py` (no se reescribe) y `aggregate` de `src/voting/aggregator.py`. **Resumible por `conversation_id`**: re-ejecutar tras crash arranca del primer par pendiente, no desde cero (persistencia atómica vía `tmp` + `os.replace` cada 10 pares y en `finally`).
     - **Política de retries**: `tenacity` con `wait_exponential(min=2, max=60)`, `stop_after_attempt(5)`, retry sobre excepciones transitorias de los tres SDKs (`RateLimitError`, `APITimeoutError`, `APIConnectionError`, `InternalServerError`, `google_errors.ServerError/APIError`). Errores fatales (`AuthenticationError`, `PermissionDeniedError`, `NotFoundError`) abortan el run en vez de quemar 90 min registrando 900 fallos idénticos.
