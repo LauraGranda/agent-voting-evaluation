@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Análisis de correlación con CIs sobre 900 pares (HU-11)** - Segundo notebook del bloque de análisis. Cuantifica con qué fuerza cada método automático correlaciona con las anotaciones humanas, reportando intervalos de confianza al 95 % por dos vías independientes y contrastando contra los baselines publicados por Liu et al. (2023). **Cero llamadas a APIs**:
+    - `notebooks/05_correlation_analysis.ipynb` - 12 celdas ejecutadas end-to-end con 900/900 entradas alineadas, ρ exactamente reproducible respecto a HU-10 (0.756 / 0.744). Narrativa y comentarios en español; identificadores técnicos en inglés.
+    - **CIs de Fisher Z analíticos** (Fisher, 1915) implementados inline en `fisher_z_ci(rho, n)` — referencia de la literatura. Reusable para Spearman ρ y Pearson r.
+    - **CIs bootstrap percentil** (`n_iter=10_000`, `seed=42`) en `bootstrap_spearman_ci()` como validación no paramétrica. **Match con Fisher Z confirmado** dentro de `|Δ| < 0.002` en ambos métodos.
+    - **Pearson r** complementario con sus CIs: G-Eval r=0.711 [0.677, 0.742], Voting r=0.733 [0.701, 0.761] — **el orden se invierte respecto a Spearman**, hallazgo que documenta la prosa de la celda interpretativa.
+    - **Figura 14** `outputs/figures/14_correlation_ci_plot.png` (150 dpi): dot-plot con error-bars del CI 95 % y líneas de referencia para los baselines publicados (SummEval relevance 0.547, Topical-Chat coherence 0.605).
+    - **Summary table persistida** en `outputs/correlation_analysis_summary.md` con tres sub-tablas (Spearman + CIs por dos vías, Pearson + CI, Δ observado) y nota de cross-reference a HU-12 para significancia.
+    - **Sección interpretativa académica** de ~750 palabras en prosa española con 5 subsecciones del spec: magnitud (Cohen 1988), interpretación de CIs, Pearson vs Spearman (incluyendo la inversión de orden), comparación contra Liu et al. (2023) y limitaciones.
+    - **Resultados clave (n=900)**:
+        - **Spearman ρ vs human**: G-Eval `0.756` 95% CI [0.727, 0.783] | Voting `0.744` 95% CI [0.714, 0.772]. **Δρ = +0.012** (a favor de G-Eval).
+        - **Pearson r vs human**: G-Eval `0.711` 95% CI [0.677, 0.742] | Voting `0.733` 95% CI [0.701, 0.761]. **Δr = −0.022** (a favor de Voting).
+        - **Validación cruzada**: bootstrap difiere de Fisher Z en `|Δ|≤0.002` (mucho menor que la tolerancia 0.01).
+        - **Ambos métodos superan baselines de Liu et al. (2023)** por +0.15 a +0.20 ρ.
+    - **Alcance acotado por diseño**: el test de significancia de Δρ (Steiger 1980, bootstrap pareado, Wilcoxon) **no** se ejecuta aquí — queda íntegro para HU-12 (`notebooks/06_significance_tests.ipynb`). Cada celda relevante referencia HU-12 explícitamente.
+
 - **Análisis descriptivo G-Eval vs Voting vs Human sobre 900 pares (HU-10)** - Notebook que cierra el bloque comparativo descriptivo, sin llamadas a APIs (lee solo `outputs/voting_results.json`, `outputs/geval_results.json`, `data/raw/dailydialog_zhao/dataset.json`):
     - `notebooks/04_descriptive_analysis.ipynb` - 15 celdas ejecutadas end-to-end con 900/900 entradas alineadas por `conversation_id`, 0 excluidas por scores faltantes.
     - **Estrato derivado en el propio notebook** (1=ground-truth, 2=negative-sample, 3=AI h≥4, 4=2.5–3.5, 5=h≤2) porque `voting_results.json.stratum` quedó en `null` durante HU-09 (el runner leyó del nivel equivocado del JSON procesado; no afecta a este análisis, pero sí se debe corregir en una HU futura del runner).
