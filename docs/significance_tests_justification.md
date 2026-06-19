@@ -157,9 +157,31 @@ distintas, el bootstrap es la referencia.
 **Predicción y resultado.** Con `r_GV = 0,897` (Spearman), el SE
 correcto es ≈ 0,016 (≈ 3× menor que el `√(2/(n−3)) = 0,047` del
 caso independiente). Para `Δρ = 0,012`, eso da `Z ≈ 1,26, p ≈ 0,21`.
-El bootstrap pareado da `p ≈ 0,26` con CI `[−0,010, +0,033]`. Ninguno
-rechaza H0; coinciden cualitativamente y dan p-valores en el mismo
-orden de magnitud, lo cual robustece la conclusión.
+El bootstrap pareado da CI 95 % `[−0,010, +0,033]` y `p ≈ 0,26`.
+Ninguno rechaza H0; coinciden cualitativamente y dan p-valores en
+el mismo orden de magnitud, lo cual robustece la conclusión.
+
+**Cómo se calcula el p-valor del bootstrap.** A diferencia del
+Steiger, el bootstrap no tiene un estadístico con distribución
+analítica cerrada bajo H0. El p-valor reportado en el notebook se
+calcula con el método del **achieved significance level** (ASL,
+Efron & Tibshirani 1993): se cuenta la proporción de réplicas
+bootstrap con signo opuesto al `Δρ` observado y se multiplica por 2
+para hacerlo bilateral:
+
+```text
+p_boot = 2 · min( P(Δρ_boot ≤ 0),  P(Δρ_boot ≥ 0) )
+```
+
+Equivalentemente, es 2 veces la fracción de la distribución bootstrap
+que está al otro lado de cero respecto al `Δρ` observado. Es un
+p-valor empírico válido bajo el supuesto de que la distribución
+bootstrap aproxima la distribución muestral de `Δρ` (que es la
+hipótesis fundamental del bootstrap). Con `n_iter = 10 000` y
+`seed = 42`, la precisión de Monte Carlo es ≈ ±0,01 sobre el p-valor.
+La consistencia entre `p_boot ≈ 0,26` y `p_Steiger ≈ 0,21` valida
+empíricamente el procedimiento: dos métodos independientes (uno
+analítico, uno empírico) llegan a la misma conclusión cualitativa.
 
 **Solapamiento de CIs ≠ test de equivalencia.** Comparar visualmente
 los dos CIs de Fisher Z calculados independientemente para ρ_geval y
@@ -188,10 +210,12 @@ sensibilidad si la región elegida es polémica.
 
 El test de Shapiro–Wilk (Shapiro & Wilk, 1965) contrasta
 `H0: la muestra proviene de una distribución normal`. Se aplica aquí
-sobre el array `diff` (diferencia entre errores), no sobre los scores
-brutos, porque la suposición de normalidad del t-test pareado se
-refiere a la distribución de las diferencias intra-sujeto, no a las
-distribuciones marginales.
+sobre el array **`diff_abs`** (diferencia entre errores absolutos,
+`abs_err_geval − abs_err_voting`), no sobre los scores brutos, porque
+la suposición de normalidad del t pareado se refiere a la distribución
+de las diferencias intra-sujeto sobre las que se testea, no a las
+distribuciones marginales de los puntajes. La nomenclatura coincide
+con la del notebook (`notebooks/06_significance_tests.ipynb`, Cell 4).
 
 **Comportamiento esperado con n = 900.** La estadística inferencial
 sobre el Shapiro–Wilk con muestras grandes está bien documentada:
@@ -209,12 +233,14 @@ inspección gráfica (histograma + Q-Q plot).
 **Implicación operativa.** El p-valor de Shapiro–Wilk se reporta como
 dato diagnóstico, pero la decisión de seleccionar el test principal
 **no** depende únicamente de ese p-valor. Se combina con
-**inspección visual** del array de diferencias vía un histograma con
-curva normal superpuesta y un Q-Q plot (figura 15
+**inspección visual** de `diff_abs` vía un histograma con curva
+normal superpuesta y un Q-Q plot (figura 15
 `outputs/figures/15_normality_check.png`). Si el histograma es
 aproximadamente simétrico y campaniforme y el Q-Q sigue la línea de
 referencia salvo en colas extremas, la desviación de normalidad es
-trivial en la práctica.
+trivial en la práctica. En estos datos `diff_abs` resulta asimétrico
+(`skewness = +0,38`, `z-skew = +4,66`), lo cual justifica preferir
+Wilcoxon sobre t pareado como test principal.
 
 ## 4. Selección del test principal: Wilcoxon vs. t-test
 
@@ -322,7 +348,6 @@ pareada de dos evaluadores automáticos contra un gold standard humano).
 | **Sign test** | No paramétrico, pareado | Solo simetría de los signos bajo H0 | Mínimos supuestos; muy simple | Descarta toda la magnitud de las diferencias; potencia más baja que Wilcoxon | **Descartado**: el Wilcoxon domina por usar el rango de las diferencias. |
 | **Mann–Whitney U** | No paramétrico, **no pareado** | Muestras independientes | Robusto; estándar para dos grupos independientes | **No aplica**: los datos son pareados por `conversation_id` | **Descartado**: usarlo ignoraría la dependencia y subestimaría la potencia. |
 | **Permutation test** (paired) | No paramétrico, pareado | Intercambiabilidad bajo H0 | Distribución exacta bajo H0; sin supuestos paramétricos | Costo computacional; effect size no tan estándar | **No usado**: el Wilcoxon es equivalente en este escenario y mucho más rápido; ya hay reproducibilidad fija con seed=42. |
-| **TOST (Two One-Sided Tests)** | Paramétrico, equivalencia | Región de equivalencia predefinida | Permite **probar equivalencia** (no solo "no rechazar superioridad") | Requiere fijar una región de equivalencia antes del análisis | **No usado en HU-12** pero **señalado como extensión futura**: HU-12 prueba superioridad y deja la equivalencia para HUs siguientes (limitación reconocida en la conclusión). |
 
 ### 6.2 Pruebas para la diferencia entre correlaciones
 
@@ -331,7 +356,7 @@ pareada de dos evaluadores automáticos contra un gold standard humano).
 | **Steiger Z overlapping** (Steiger, 1980) | Comparar dos correlaciones que comparten una variable | Cierre analítico; usa Fisher Z; explícitamente contabiliza `r_GV` | Derivado para Pearson bajo normalidad bivariada; SE inflado si se aplica Spearman sin corrección Bonett–Wright | **Test usado** con la fórmula correcta del caso overlapping (depende de `r_GV = 0,897`). |
 | **Fisher Z para correlaciones independientes** | Comparar dos correlaciones medidas en muestras distintas | Forma cerrada; estándar de la literatura | **No aplica**: nuestras correlaciones no son independientes (mismo target) | **Descartado**: aplicarlo ignora la dependencia y produce SE incorrecto. |
 | **Williams test** | Caso especial con ajuste de Hotelling-Williams para muestras pequeñas | Más conservador con n pequeño | Marginalmente distinto del Steiger overlapping con n grande | **No necesario** con n=900; Steiger overlapping es la forma estándar. |
-| **Bootstrap pareado de Δρ** | Remuestrear con reemplazo y calcular CI percentil del Δρ | No paramétrico; respeta automáticamente la dependencia entre las dos correlaciones; sin supuestos sobre la transformación Fisher Z | Sin p-valor de forma cerrada (se obtiene del CI) | **Test usado** como método principal robusto. Con n=900 son milisegundos, no costoso. Es la referencia cuando Steiger overlapping y bootstrap discrepan. |
+| **Bootstrap pareado de Δρ** | Remuestrear con reemplazo y calcular CI percentil del Δρ; p-valor por *achieved significance level* (proporción bilateral de réplicas con signo opuesto) | No paramétrico; respeta automáticamente la dependencia entre las dos correlaciones; sin supuestos sobre la transformación Fisher Z | El p-valor es empírico (no analítico) y tiene precisión Monte Carlo limitada por `n_iter` | **Test usado** como método principal robusto, con `n_iter = 10 000` y `seed = 42`. Con n=900 son milisegundos. Es la referencia cuando Steiger overlapping y bootstrap discrepan. |
 | **Bonett & Wright (2000)** | Corrección del SE de Fisher Z para Spearman | Apropiado cuando se aplica Steiger a Spearman | Marginal con `ρ ≈ 0,75` (factor ≈ 1,07) | **Mencionado** pero no implementado: el bootstrap pareado resuelve el problema sin necesitar la corrección analítica. |
 | **TOST** (Schuirmann, 1987) | Probar equivalencia con región predefinida | **Único** método para afirmar equivalencia positivamente, no solo "no rechazo" | Requiere fijar `δ` a priori; resultado depende de esa elección | **Test usado** con `δ = 0,05` sobre Δρ. Es la pieza que permite cerrar la pregunta con afirmación, no con ausencia de evidencia. |
 
@@ -351,13 +376,24 @@ análisis de simetría como diagnósticos; **Wilcoxon signed-rank**
 primario y **t pareado** complementario sobre `|error|` para
 exactitud; **Wilcoxon** sobre `geval − voting` para diagnosticar
 sesgo inter-método; **Steiger overlapping** y **bootstrap pareado**
-para Δρ; **TOST** ±0,05 para afirmar equivalencia formal;
-**Holm-Bonferroni** sobre los p-valores principales — cubre los
-planos del análisis con el test apropiado en cada uno. Los
+para Δρ; **TOST** ±0,05 sobre Δρ para afirmar equivalencia formal en
+ranking; **Holm-Bonferroni** sobre los p-valores principales — cubre
+los planos del análisis con el test apropiado en cada uno. Los
 alternativos descartados son o bien incompatibles con la dependencia
 entre muestras (Mann–Whitney, Fisher Z independiente) o bien
 estrictamente dominados por la opción elegida (sign test, KS,
 Anderson–Darling) en el régimen de los datos de la tesis.
+
+**Extensión natural pendiente.** El TOST se aplica aquí sobre Δρ
+(plano de ranking). Una extensión simétrica sería aplicar TOST sobre
+la diferencia de errores absolutos `|err_geval| − |err_voting|` con
+una región de equivalencia predefinida, para afirmar equivalencia
+formal **en exactitud**, no solo en ranking. El notebook actual usa
+Wilcoxon y t pareado sobre esa diferencia (tests de superioridad)
+y observa effect size negligible, lo cual sustenta una conclusión
+de equivalencia práctica. Hacer la afirmación formal vía TOST
+requiere fijar la región `±δ` a priori (defendible `δ ≈ 0,05` sobre
+el rango 1–5) y queda como refinamiento natural en una HU futura.
 
 ## 7. Comparaciones múltiples
 
@@ -385,6 +421,10 @@ origen. Los URLs y DOIs apuntan a la versión canónica.
 - Cohen, J. (1988). *Statistical Power Analysis for the Behavioral
   Sciences* (2nd ed.). Hillsdale, NJ: Lawrence Erlbaum Associates.
   ISBN 978-0805802832.
+- Efron, B., & Tibshirani, R. J. (1993). *An Introduction to the
+  Bootstrap*. New York: Chapman & Hall/CRC. ISBN 978-0412042317.
+  Capítulo 15 sobre p-valores bootstrap por *achieved significance
+  level*.
 - Conover, W. J. (1999). *Practical Nonparametric Statistics*
   (3rd ed.). New York: John Wiley & Sons. ISBN 978-0471160687.
   <https://www.wiley.com/en-us/Practical+Nonparametric+Statistics%2C+3rd+Edition-p-9780471160687>
