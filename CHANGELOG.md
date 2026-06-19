@@ -7,7 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-17
+
 ### Added
+
+- **Pruebas de significancia estadística G-Eval vs Voting sobre 900 pares (HU-12)** - Tercer notebook del bloque de análisis, precedido del documento de justificación metodológica. **Cero llamadas a APIs**:
+    - **`docs/significance_tests_justification.md`** (NUEVO) - Documento de investigación con 8 secciones que justifica la selección de tests sobre el diseño pareado y ordinal del estudio: naturaleza de los datos (§1), Steiger overlapping con `r_GV` (§2), Shapiro–Wilk con n grande (§3), Wilcoxon vs t pareado (§4), effect sizes incluyendo rank-biserial directo (§5), comparativa de pruebas alternativas (§6), comparaciones múltiples Holm (§7) y referencias verificadas con DOIs/URLs (§8). 12 fuentes citadas, todas verificadas contra su publicación de origen.
+    - **`notebooks/06_significance_tests.ipynb`** - 14 celdas con 5 tests principales sobre la cantidad correcta para cada pregunta: Wilcoxon principal y t pareado complementario sobre `|err_g|` vs `|err_v|` (exactitud); Wilcoxon sobre `geval − voting` como diagnóstico de sesgo inter-método; bootstrap pareado y Steiger overlapping sobre Δρ (ranking); TOST con margen ±0,05 sobre Δρ (equivalencia formal). Corrección Holm-Bonferroni sobre los 5 p-valores. ρ exactamente reproducibles vs HU-11 (0,756 / 0,744). `np.random.seed(42)`.
+    - **`steiger_overlapping(r₁, r₂, r_GV, n)`** implementación de la fórmula correcta del Steiger (1980) para correlaciones dependientes que comparten una variable. El SE depende explícitamente de `r_GV = corr(geval, voting) = 0,897`.
+    - **`rank_biserial_signed(diff)`** computa el effect size del Wilcoxon directamente desde los rangos con signo (sin circular desde el p-valor) y reporta el N efectivo (pares no nulos).
+    - **TOST sobre Δρ** con región de equivalencia predefinida ±0,05 (Schuirmann, 1987): el 90% CI bootstrap cabe íntegramente dentro, **afirma equivalencia formal** en ranking — declaración positiva, no solo ausencia de evidencia.
+    - **Figura 15** `15_normality_check.png` (150 dpi): histograma + Q-Q plot de `diff_abs` con análisis de simetría (skewness, z-skew).
+    - **Figura 16** `16_bootstrap_delta_rho.png` (150 dpi): distribución bootstrap de Δρ con CI 95% y región TOST sombreada.
+    - **Summary persistido** en `outputs/significance_tests_summary.md` con 5 sub-tablas (exactitud, sesgo inter-método, ranking, equivalencia TOST, diagnósticos).
+    - **Resultados clave (n=900)** — **prácticamente equivalentes** en lo que importa para aproximación al humano:
+        - **Exactitud, Wilcoxon principal sobre `|error|`**: W=191.287, p=0,194, r=+0,050 (**negligible**). **No rechaza** H0.
+        - **Exactitud, t pareado complementario**: t=+2,89, p=0,004 (p Holm=0,016), Cohen's d=+0,097 (**negligible**). Rechaza H0 pero con effect size irrelevante — discrepancia legítima por asimetría (skew=+0,38).
+        - **Ranking, Bootstrap pareado de Δρ**: Δρ=+0,012, CI 95% [−0,010, +0,033], p=0,263. No rechaza.
+        - **Ranking, Steiger overlapping**: Z=+1,26, p=0,209. La fórmula correcta depende de `r_GV=0,897` (alta correlación entre estimadores que comparten prompt V3 y `gpt-4o`).
+        - **TOST sobre Δρ ±0,05**: 90% CI bootstrap [−0,006, +0,030] ⊂ [−0,05, +0,05]. **Equivalencia formal afirmada**.
+        - **Sesgo inter-método, Wilcoxon sobre `geval − voting`**: W=104.126, p<10⁻³⁵, r=−0,48 (medium). Rechaza H0: voting puntúa +0,40 sobre G-Eval sistemáticamente. **No es exactitud** (`geval − voting` es algebraicamente independiente del humano).
+        - **Diagnósticos**: Shapiro-Wilk W=0,969, p=5,9×10⁻¹³ (no normal, esperado con n grande); skewness +0,38, asimétrica.
+    - **Lectura integrada del bloque (HU-10 + HU-11 + HU-12)**: G-Eval y voting son **estadísticamente equivalentes** en ranking (TOST formal con margen ±0,05) y en exactitud (effect size negligible). Difieren significativamente en sesgo de escala con effect size medium pero esto es descriptivo, no ventaja de exactitud. El voting conserva ventajas descriptivas sustantivas (Cohen's κ 0,643 vs 0,525, exact-agreement 44% vs 36%, MAE en Estrato 3 de IA alta 40% menor) más diversidad de proveedor. **Recomendación**: el sistema de votación, fundamentado en equivalencia formal en ranking y exactitud + ventajas descriptivas + robustez operativa, no en superioridad inferencial.
 
 - **Análisis de correlación con CIs sobre 900 pares (HU-11)** - Segundo notebook del bloque de análisis. Cuantifica con qué fuerza cada método automático correlaciona con las anotaciones humanas, reportando intervalos de confianza al 95 % por dos vías independientes y contrastando contra los baselines publicados por Liu et al. (2023). **Cero llamadas a APIs**:
     - `notebooks/05_correlation_analysis.ipynb` - 12 celdas ejecutadas end-to-end con 900/900 entradas alineadas, ρ exactamente reproducible respecto a HU-10 (0.756 / 0.744). Narrativa y comentarios en español; identificadores técnicos en inglés.
@@ -38,6 +59,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - **Estrato 3 (IA alta relevancia, n=216)**: confirmado como el más difícil para ambos (ρ_G=0.27, ρ_V=0.22), pero voting reduce el MAE en **40%** vs G-Eval (0.770 vs 1.286).
     - **Sección interpretativa** de 1.043 palabras en prosa académica (Cell 14) cubriendo distribución, correlación, agreement, estrato, agentes individuales e implicaciones para la tesis. El hallazgo central documentado: la respuesta a "¿voting ≥ G-Eval?" **depende de la métrica** — Spearman favorece G-Eval marginalmente, κ/α/exact-agreement favorecen voting sustancialmente.
     - **Field-name reconciliation con la spec**: `human_relevance_score` (dataset crudo, no `human_score`), `final_vote_score` (no `vote_score`).
+
+## [0.6.0] - 2026-06-07
+
+### Added
 
 - **Sistema de Votación — Runner completo sobre 900 pares (HU-09)** - Escala el pipeline del panel (validado en pilot HU-08) al dataset completo, produciendo los outputs que la HU posterior usará para el análisis comparativo formal contra G-Eval:
     - `scripts/run_voting_system.py` - Orquesta 2.700 llamadas reales (900 pares × 3 jueces) reusando `call_agent` de `scripts/run_judge.py` (no se reescribe) y `aggregate` de `src/voting/aggregator.py`. **Resumible por `conversation_id`**: re-ejecutar tras crash arranca del primer par pendiente, no desde cero (persistencia atómica vía `tmp` + `os.replace` cada 10 pares y en `finally`).
