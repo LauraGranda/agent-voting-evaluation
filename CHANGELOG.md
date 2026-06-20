@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Análisis de errores G-Eval vs Voting sobre 900 pares + documento de limitaciones (HU-13)** - Cuarto y último notebook del bloque de análisis. Identifica patrones cualitativos de fallo que la equivalencia estadística global (HU-12) oculta. **Cero llamadas a APIs**:
+    - `notebooks/07_error_analysis.ipynb` - 14 celdas ejecutadas end-to-end con 900/900 entradas alineadas. Distribución de errores con signo, top-20 divergencias por método, matriz de coocurrencia de errores severos, MAE por estrato, análisis de desacuerdo inter-agente, taxonomía emergente apoyada en datos y 5 case studies con texto real de `turns[]` y `response`. Narrativa en español, identificadores en inglés. `np.random.seed(42)`.
+    - **`docs/limitations.md`** (NUEVO, 1 577 palabras, 5 secciones): limitaciones del dataset DailyDialog–Zhao, específicas de G-Eval, específicas del sistema de votación, compartidas, e implicaciones para investigación futura. Cada limitación cita evidencia numérica concreta de los notebooks 04, 06, 07.
+    - **Figura 17** `17_error_distribution.png` (150 dpi): histogramas superpuestos del error con signo y del error absoluto, con MAE y umbral severo señalizados.
+    - **Figura 18** `18_divergence_by_stratum.png` (150 dpi): boxplots de `|error|` por estrato/método + heatmap del sesgo medio por estrato.
+    - **Figura 19** `19_inter_agent_disagreement.png` (150 dpi): scatter `std_judges` vs `|err_voting|` coloreado por estrato + distribución de `std_judges` por estrato.
+    - **Summary persistido** en `outputs/error_analysis_summary.md` con 7 secciones: métricas globales, MAE/sesgo por estrato, matriz de errores severos, top-20 G-Eval, top-20 Voting, taxonomía y 5 case studies.
+    - **Hallazgos centrales (n=900)** — la equivalencia global esconde fallos asimétricos:
+        - **Sesgo de subestimación**: G-Eval sesgo medio = −0,750 (58,7 % de casos por debajo del humano); Voting sesgo medio = −0,348 (39,4 %). Ambos métodos son **más estrictos** que los humanos MTurk, contradiciendo la intuición de "LLM judges generosos".
+        - **Estrato 3 (IA alta, n = 216)** confirmado como el régimen crítico: G-Eval MAE = 1,286 vs Voting MAE = 0,770; sesgo G-Eval = −1,228; **16 de los 20** casos del top-20 de G-Eval caen aquí.
+        - **Estrato 5 (IA baja, n = 159)** único régimen donde G-Eval supera a voting: MAE 0,372 vs 0,595.
+        - **Co-localización parcial**: ρ(|err_geval|, |err_voting|) = +0,420; 91 casos con fallo severo simultáneo, 99 solo G-Eval, 84 solo voting, 626 ambos correctos. 183 casos (20 %) son rescatados por exactamente uno de los dos métodos.
+        - **`std_judges` no es señal útil de incertidumbre**: ρ(std_judges, |err_voting|) = +0,013, p = 0,705. La hipótesis "mayor desacuerdo inter-juez = mayor error vs humano" queda **rechazada por los datos**.
+    - **Taxonomía de errores en 5 categorías derivadas de los datos**: (A) subestimación severa en estrato 3, (B) sesgo de subestimación global más fuerte en G-Eval, (C) estrato 5 como excepción a favor de G-Eval, (D) fallas correlacionadas en bloque del panel, (E) co-localización parcial de fallos cerrada con McNemar.
+    - **Cuatro sesgos clásicos del criterio académico abordados explícitamente** (HU-13, Cell 9b): verbosidad (G-Eval ρ = −0,003 NS; voting ρ = −0,175 *** con efecto pequeño anti-verbosidad), posicional (N/A por diseño pointwise), ambigüedad de contexto (G-Eval ρ = +0,109, voting ρ = +0,377 sobre `std(raw_human_scores)` como proxy de ambigüedad — voting más sensible al ruido del gold standard), auto-preferencia de familia (ρ ∈ {0,499; 0,534; 0,568} entre errores absolutos de los tres jueces individuales).
+    - **Adjudicación manual del top-20 con regla mecánica** (HU-13, Cell 13): 2/20 etiqueta dudosa en G-Eval (18/20 error genuino del método), 8/20 etiqueta dudosa en voting (12/20 error genuino). La asimetría refuerza la conclusión a favor de voting: una fracción importante de sus peores casos es ruido del gold standard MTurk, no fallo del método.
+    - **McNemar sobre la matriz de errores severos** (HU-13, Cell 7): χ² = 1,07, p = 0,30 — ningún método comete significativamente más errores severos que el otro, cierre inferencial coherente con la equivalencia formal de HU-12.
+    - **Reframing de la categoría D** (HU-13, Cell 10): se reemplaza "hipótesis RECHAZADA" por "no se encuentra evidencia de asociación con caveat de potencia" (std_judges toma sólo 4 valores discretos). El insight central pasa a ser: cuando el panel falla, falla en bloque (case studies 3 y 4 con std = 0). Las correlaciones de errores entre jueces individuales (ρ ≈ 0,5) cuantifican la limitación arquitectónica del enfoque de panel — tres jueces que comparten puntos ciegos del paradigma LLM no aportan tres muestras independientes.
+
 ## [0.7.0] - 2026-06-17
 
 ### Added
