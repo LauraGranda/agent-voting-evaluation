@@ -1,0 +1,46 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software or the underlying study in your work, please cite
+  both the software (this entry) and the master's thesis it supports
+  (see `preferred-citation`).
+title: >-
+  Agentic Voting vs G-Eval for Relevance Evaluation in Conversational AI
+abstract: >-
+  Reference implementation and result artifacts for a master's thesis that
+  compares the G-Eval framework (single judge, gpt-4o) against a three-judge
+  agentic voting system (gpt-4o, gemini-2.5-flash, claude-haiku-4-5) on
+  900 conversations from the DailyDialog-Zhao corpus. The repository contains
+  the runners, configurations, executable notebooks, and per-pair JSON
+  results that underpin the descriptive, correlation, significance, error
+  and cost analyses of the thesis.
+type: software
+authors:
+  - family-names: Granda
+    given-names: Laura
+    affiliation: Universidad Pontificia Bolivariana
+license: MIT
+repository-code: https://github.com/LauraGranda/agent-voting-evaluation
+keywords:
+  - conversational AI
+  - relevance evaluation
+  - LLM-as-judge
+  - G-Eval
+  - agentic voting
+  - DailyDialog
+  - statistical equivalence
+  - TOST
+version: 0.7.0
+date-released: 2026-06-19
+preferred-citation:
+  type: thesis
+  title: >-
+    Evaluación de Relevancia en Agentes Conversacionales de IA mediante un
+    Sistema de Votación Agéntico en comparación con el Framework G-EVAL
+  authors:
+    - family-names: Granda
+      given-names: Laura
+      affiliation: Universidad Pontificia Bolivariana
+  thesis-type: Master's thesis
+  institution:
+    name: Universidad Pontificia Bolivariana
+  year: 2026
