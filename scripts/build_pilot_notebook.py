@@ -15,10 +15,12 @@ NB_PATH = Path("notebooks/02_prompt_pilot.ipynb")
 
 
 def md(src: str) -> Any:
+    """Build a markdown notebook cell from a source string."""
     return nbformat.v4.new_markdown_cell(src.rstrip() + "\n")
 
 
 def code(src: str) -> Any:
+    """Build a code notebook cell from a source string."""
     return nbformat.v4.new_code_cell(src.rstrip() + "\n")
 
 
@@ -975,6 +977,7 @@ Regla de decisión:
 
 
 def main() -> None:
+    """Assemble the pilot notebook and write it to disk."""
     nb = nbformat.v4.new_notebook()  # type: ignore[no-untyped-call]
     nb["cells"] = [
         CELL_1,

@@ -72,6 +72,7 @@ def model_family(model_name: str) -> str:
 
 # ─── Loading ─────────────────────────────────────────────────────────────
 def load_json(path: Path) -> Any:
+    """Read and parse a JSON file as UTF-8."""
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 
@@ -204,6 +205,7 @@ def krippendorff_alpha_ordinal(ratings: np.ndarray) -> float:
     n = n_c.sum()
 
     def delta2(c: int, k: int) -> float:
+        """Squared interval distance between ordinal categories ``c`` and ``k``."""
         lo, hi = (c, k) if c <= k else (k, c)
         gap = n_c[lo : hi + 1].sum() - (n_c[lo] + n_c[hi]) / 2.0
         return float(gap * gap)
@@ -302,6 +304,7 @@ def ceiling_verdict(geval_rho: float, loo: float) -> str:
 
 # ─── Figures ─────────────────────────────────────────────────────────────
 def fig_scatter(rows: list[dict], path: Path) -> None:
+    """Save the human-vs-G-Eval scatter with best-fit line at ``path``."""
     geval = np.array([r["geval"] for r in rows])
     human = np.array([r["human"] for r in rows])
     fig, ax = plt.subplots(figsize=(6, 6))
@@ -323,6 +326,7 @@ def fig_scatter(rows: list[dict], path: Path) -> None:
 
 
 def fig_residuals(rows: list[dict], path: Path) -> None:
+    """Save the histogram of residuals ``Δ = G-Eval − human`` at ``path``."""
     delta = np.array([r["delta"] for r in rows])
     fig, ax = plt.subplots(figsize=(7, 4.5))
     ax.hist(delta, bins=40, color="#4477aa", edgecolor="white")
@@ -341,6 +345,7 @@ def fig_residuals(rows: list[dict], path: Path) -> None:
 
 
 def fig_delta_boxplot(rows: list[dict], path: Path) -> None:
+    """Save a boxplot of residuals broken down by model family at ``path``."""
     fams = sorted({r["family"] for r in rows})
     data = [[r["delta"] for r in rows if r["family"] == f] for f in fams]
     fig, ax = plt.subplots(figsize=(8, 4.5))
@@ -355,6 +360,7 @@ def fig_delta_boxplot(rows: list[dict], path: Path) -> None:
 
 
 def fig_mean_by_family(family_rows: list[dict], path: Path) -> None:
+    """Save a paired bar plot of human vs G-Eval mean scores per family."""
     names = [g["name"] for g in family_rows]
     human = [g["human_mean"] for g in family_rows]
     geval = [g["geval_mean"] for g in family_rows]
@@ -374,6 +380,7 @@ def fig_mean_by_family(family_rows: list[dict], path: Path) -> None:
 
 
 def fig_ceiling(geval_rho: float, ceiling: dict[str, float], path: Path) -> None:
+    """Save a horizontal bar plot comparing G-Eval against the human agreement ceiling."""
     labels = [
         "Two single humans\n(pairwise)",
         "Human ceiling\n(1 rater vs consensus)",
@@ -408,6 +415,7 @@ def build_report(  # noqa: PLR0913
     n_fail: int,
     fig_dir: Path,
 ) -> str:
+    """Render the full markdown report string from the precomputed pieces."""
     rho = metrics["spearman_rho"]
     bias = metrics["bias"]
     direction = "over-rates" if bias > 0 else "under-rates"
@@ -544,6 +552,7 @@ def build_report(  # noqa: PLR0913
 
 # ─── Orchestration ───────────────────────────────────────────────────────
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse CLI arguments for the analyse-G-Eval entry point."""
     p = argparse.ArgumentParser(description="Analyse a completed G-Eval run.")
     p.add_argument(
         "--results", type=Path, default=DEFAULT_RESULTS, help="Path to geval_results.json."
@@ -553,6 +562,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def main() -> None:
+    """Entry point: load results, compute metrics, render figures and report."""
     args = parse_args()
     results = load_json(args.results)
     dataset = load_json(DATA_PATH)

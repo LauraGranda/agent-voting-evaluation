@@ -454,6 +454,7 @@ def _model_family(model_name: str) -> str:
 
 
 def _basic_stats(values: Iterable[float]) -> dict[str, float]:
+    """Compute n/mean/median/std/min/max for a numeric iterable."""
     vals = [float(v) for v in values]
     if not vals:
         return {"n": 0, "mean": 0.0, "median": 0.0, "std": 0.0, "min": 0.0, "max": 0.0}
@@ -546,6 +547,7 @@ def render_summary_markdown(
 
 
 def _render_completion_table(s: dict[str, Any]) -> list[str]:
+    """Render the run-completion markdown sub-table from a summary dict."""
     pct_ok = 100 * s["n_ok"] / max(1, s["n_total"])
     return [
         "## Run completion\n",
@@ -561,6 +563,7 @@ def _render_completion_table(s: dict[str, Any]) -> list[str]:
 
 
 def _render_distribution_table(overall: dict[str, float]) -> list[str]:
+    """Render the G-Eval score-distribution markdown sub-table."""
     lines = [
         "## G-Eval score distribution (1-5)\n",
         "| Stat | Value |",
@@ -573,6 +576,7 @@ def _render_distribution_table(overall: dict[str, float]) -> list[str]:
 
 
 def _render_spearman_table(s: dict[str, Any]) -> list[str]:
+    """Render the Spearman-vs-human markdown sub-table."""
     return [
         "## Spearman correlation vs. human_score\n",
         "| Metric | Value |",
@@ -584,6 +588,7 @@ def _render_spearman_table(s: dict[str, Any]) -> list[str]:
 
 
 def _render_family_table(by_family: dict[str, dict[str, float]]) -> list[str]:
+    """Render the per-model-family breakdown markdown sub-table."""
     lines = [
         "## Breakdown by model family\n",
         "| Family | n | mean | median | std | min | max |",
@@ -600,6 +605,7 @@ def _render_family_table(by_family: dict[str, dict[str, float]]) -> list[str]:
 
 
 def _render_failed_table(failed: list[dict[str, Any]]) -> list[str]:
+    """Render the markdown sub-table listing entries that failed evaluation."""
     lines = [
         "## Failed entries\n",
         "| conversation_id | attempts | error |",
@@ -633,6 +639,7 @@ def generate_summary_stats(
 
 # ─── CLI ─────────────────────────────────────────────────────────────────
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse CLI arguments for the G-Eval runner."""
     p = argparse.ArgumentParser(description="Run G-Eval over the full DailyDialog-Zhao dataset.")
     p.add_argument("--limit", type=int, default=None, help="Evaluate only the first N entries.")
     p.add_argument(
@@ -653,12 +660,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def load_dataset(path: Path) -> list[dict[str, Any]]:
+    """Load the transformed DeepEval-format dataset from ``path``."""
     with open(path, encoding="utf-8") as f:
         data: list[dict[str, Any]] = json.load(f)
     return data
 
 
 def main() -> None:
+    """Entry point: run G-Eval over the dataset and persist results + summary."""
     args = parse_args()
     output_dir: Path = args.output_dir
     log_path = output_dir / "logs" / "geval_execution.log"
