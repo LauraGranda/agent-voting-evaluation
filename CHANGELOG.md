@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Análisis de costo G-Eval vs Voting sobre 900 pares (HU-14)** - Quinto notebook del bloque de análisis. Cuantifica costo en USD, tokens y wall time, y los enmarca como trade-off frente a la equivalencia estadística formal de HU-12. **Cero llamadas a APIs**:
+    - `notebooks/08_cost_analysis.ipynb` - 11 celdas ejecutadas end-to-end con 900/900 entradas. Lee costos desde `outputs/geval_results.json` y `outputs/voting_results.json`, parsea wall time desde `outputs/logs/{geval,voting}_execution.log` (usando el último match del summary final), y lee ρ/κ/exact-agreement desde los summaries existentes de HU-10 y HU-11 vía regex — ningún número hardcoded.
+    - **Figura 20** `20_cost_breakdown.png` (150 dpi): barra apilada del costo total con stack por agente del voting + distribución del costo por evaluación (histograma comparativo).
+    - **Figura 21** `21_cost_vs_quality_tradeoff.png` (150 dpi): scatter de los dos métodos en tres planos (ρ, κ, exact-agreement) vs costo total USD.
+    - **Summary persistido** en `outputs/cost_analysis_summary.md` con 6 secciones: agregados globales, desglose por agente, tiempo de ejecución parseado, trade-off costo vs calidad con costo marginal por punto de métrica, conclusión y limitaciones.
+    - **Resultados clave (n=900)**:
+        - **Costo total**: G-Eval USD 3,5453 vs Voting USD 8,1547 → ratio voting/G-Eval = **2,30×**.
+        - **Tokens**: G-Eval 1 172 164 vs Voting 4 223 194 → ratio 3,60×.
+        - **Wall time**: G-Eval 2 241 s (37,4 min) vs Voting 9 414 s (156,9 min) → ratio 4,20×; throughput 24,1 vs 5,7 eval/min.
+        - **Desglose voting por agente**: `judge_openai` USD 4,3620 (53,5 %); `judge_anthropic` USD 3,0501 (37,4 %); `judge_google` USD 0,7426 (9,1 %). Desbalance porque `gemini-2.5-flash` es sustancialmente más barato por token.
+        - **Costo marginal**: USD 39,06 por +0,001 κ ponderado; USD 0,55 por +1 pp de exact-agreement; **indefinido para ρ** porque HU-12 estableció equivalencia formal (Δρ no significativo).
+    - **Conclusión integrada (citable en la tesis)**: dado que HU-12 estableció equivalencia inferencial entre los dos métodos, el dólar adicional del voting **no compra mejora en ranking** pero sí mejora descriptiva sustantiva (κ +0,118, exact-agreement +8,4 pp, MAE 40 % menor en estrato 3). Recomendación condicionada: G-Eval para producción a escala donde ranking es la métrica central; voting cuando importan calibración absoluta, robustez de proveedor y precisión en alta calidad.
+
 - **Análisis de errores G-Eval vs Voting sobre 900 pares + documento de limitaciones (HU-13)** - Cuarto y último notebook del bloque de análisis. Identifica patrones cualitativos de fallo que la equivalencia estadística global (HU-12) oculta. **Cero llamadas a APIs**:
     - `notebooks/07_error_analysis.ipynb` - 14 celdas ejecutadas end-to-end con 900/900 entradas alineadas. Distribución de errores con signo, top-20 divergencias por método, matriz de coocurrencia de errores severos, MAE por estrato, análisis de desacuerdo inter-agente, taxonomía emergente apoyada en datos y 5 case studies con texto real de `turns[]` y `response`. Narrativa en español, identificadores en inglés. `np.random.seed(42)`.
     - **`docs/limitations.md`** (NUEVO, 1 577 palabras, 5 secciones): limitaciones del dataset DailyDialog–Zhao, específicas de G-Eval, específicas del sistema de votación, compartidas, e implicaciones para investigación futura. Cada limitación cita evidencia numérica concreta de los notebooks 04, 06, 07.
