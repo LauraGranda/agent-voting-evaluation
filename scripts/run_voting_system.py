@@ -527,6 +527,7 @@ def _log_run_summary(
 
 # ─── Stats ───────────────────────────────────────────────────────────────
 def _model_family(model_name: str) -> str:
+    """Collapse a DailyDialog generator name into a coarse family label."""
     if model_name in ("ground-truth", "negative-sample"):
         return model_name
     for family in ("GPT2", "S2S", "HRED", "VHRED"):
@@ -556,6 +557,7 @@ def _basic_stats(values: Iterable[float]) -> dict[str, int | float]:
 
 
 def _spearman_or_nan(xs: list[float], ys: list[float]) -> tuple[float, float, int]:
+    """Return ``(rho, p, n)`` of Spearman or NaN-filled tuple if sample is too small."""
     if len(xs) < MIN_FOR_SPEARMAN or len(ys) < MIN_FOR_SPEARMAN:
         return float("nan"), float("nan"), len(xs)
     rho, p = spearmanr(xs, ys)
@@ -692,6 +694,7 @@ def render_summary_markdown(summary: dict[str, Any]) -> str:
 
 
 def _render_completion_table(s: dict[str, Any]) -> list[str]:
+    """Render the run-completion markdown sub-table from a summary dict."""
     pct_ok = 100 * s["n_ok"] / max(1, s["n_total"])
     lines = [
         "## Run completion\n",
@@ -711,6 +714,7 @@ def _render_completion_table(s: dict[str, Any]) -> list[str]:
 
 
 def _render_distribution_table(overall: dict[str, int | float]) -> list[str]:
+    """Render the final-vote-score distribution markdown sub-table."""
     lines = [
         "## final_vote_score distribution (1-5)\n",
         "| Stat | Value |",
@@ -723,6 +727,7 @@ def _render_distribution_table(overall: dict[str, int | float]) -> list[str]:
 
 
 def _render_spearman_table(s: dict[str, Any]) -> list[str]:
+    """Render the Spearman-vs-human markdown sub-table (panel + per-judge)."""
     lines = [
         "## Spearman correlation vs. human_score\n",
         "| Source | rho | p-value | n |",
@@ -741,6 +746,7 @@ def _render_spearman_table(s: dict[str, Any]) -> list[str]:
 
 
 def _render_family_table(by_family: dict[str, dict[str, int | float]]) -> list[str]:
+    """Render the per-model-family breakdown markdown sub-table."""
     lines = [
         "## Breakdown by model family\n",
         "| Family | n | mean | median | std | min | max |",
@@ -757,6 +763,7 @@ def _render_family_table(by_family: dict[str, dict[str, int | float]]) -> list[s
 
 
 def _render_agreement_table(counts: dict[str, int]) -> list[str]:
+    """Render the panel agreement-levels markdown sub-table."""
     total = sum(counts.values())
     lines = [
         "## Panel agreement levels\n",
@@ -772,6 +779,7 @@ def _render_agreement_table(counts: dict[str, int]) -> list[str]:
 
 
 def _render_failed_table(failed: list[dict[str, Any]]) -> list[str]:
+    """Render the markdown sub-table listing pairs where aggregation refused."""
     lines = [
         "## Failed pairs (aggregate refused)\n",
         "| conversation_id | error |",
@@ -805,6 +813,7 @@ def generate_summary_stats(
 
 # ─── CLI ─────────────────────────────────────────────────────────────────
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse CLI arguments for the voting-system runner."""
     p = argparse.ArgumentParser(
         description="Run the agentic voting system over the full DailyDialog-Zhao dataset.",
     )
@@ -841,6 +850,7 @@ def _require_keys(agent_configs: list[dict[str, Any]]) -> None:
 
 
 def main() -> None:
+    """Entry point: run the voting panel over the dataset and persist outputs."""
     args = parse_args()
     output_dir: Path = args.output_dir
     log_path = output_dir / "logs" / "voting_execution.log"
